@@ -2,634 +2,1268 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>文字の神</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Zen+Antique&family=Hachi+Maru+Pop&family=Rampart+One&family=DotGothic16&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:#efefec; overflow:hidden; width:100vw; height:100vh; }
-canvas { display:block; }
-
-#ui {
-  position:fixed; inset:0;
-  pointer-events:none;
-  z-index:10;
+body {
+  background: #f0efec;
+  overflow: hidden;
+  width: 100vw; height: 100vh;
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  user-select: none;
 }
+canvas { position: fixed; inset: 0; z-index: 0; }
 
-/* モードボタン */
-#mode-bar {
-  position:absolute;
-  top:16px; left:50%;
-  transform:translateX(-50%);
-  display:flex; gap:0;
-  background:rgba(255,255,255,0.82);
-  border-radius:999px;
-  padding:5px;
-  box-shadow:0 2px 16px rgba(0,0,0,0.10);
-  pointer-events:all;
+#panel {
+  position: fixed; top: 1.2rem; left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  background: rgba(255,255,255,0.85);
+  border-radius: 40px; padding: 5px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.1);
 }
-.mbtn {
-  font-size:13px; font-weight:700;
-  padding:7px 20px;
-  border:none; border-radius:999px;
-  background:transparent;
-  color:rgba(0,0,0,0.38);
-  cursor:pointer;
-  transition:all .2s;
-  letter-spacing:.05em;
-  font-family:sans-serif;
+.gbtn {
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
+  padding: 0.45rem 1.3rem; border-radius: 36px; border: none;
+  background: transparent; cursor: pointer; transition: all 0.2s;
+  color: rgba(0,0,0,0.4);
 }
-.mbtn.on { color:#fff; }
-#men.on  { background:linear-gradient(120deg,#e8507a,#f5a623); }
-#mze.on  { background:linear-gradient(120deg,#5040e8,#a020cc); }
-#mwa.on  { background:rgba(0,0,0,0.12); color:rgba(0,0,0,.55); }
+.gbtn.on { color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+#b-en.on  { background: linear-gradient(135deg,#e85d8a,#f7a23e); }
+#b-cut.on { background: linear-gradient(135deg,#5b4cff,#a020e0); }
+#b-see.on { background: rgba(0,0,0,0.1); color: rgba(0,0,0,0.5); }
 
-/* バロメータ */
 #baro {
-  position:absolute;
-  top:16px; left:16px;
-  width:182px;
-  background:rgba(255,255,255,0.82);
-  border-radius:14px;
-  padding:14px 14px 12px;
-  box-shadow:0 2px 16px rgba(0,0,0,0.08);
+  position: fixed; top: 1.2rem; left: 1.2rem; z-index: 20;
+  width: 175px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 14px; padding: 1rem 1.1rem;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.08);
 }
-.bt { font-size:9px; letter-spacing:.45em; color:rgba(0,0,0,.22); margin-bottom:10px; font-family:sans-serif; }
-.br { display:flex; align-items:center; gap:6px; margin-bottom:7px; }
-.bl { font-size:10px; color:rgba(0,0,0,.38); width:56px; flex-shrink:0; font-family:sans-serif; }
-.btr { flex:1; height:5px; background:rgba(0,0,0,.07); border-radius:3px; overflow:hidden; }
-.bf  { height:100%; border-radius:3px; transition:width .5s; width:0; }
-.bv  { font-size:10px; color:rgba(0,0,0,.35); width:22px; text-align:right; font-family:monospace; }
-.bdiv { border:none; border-top:1px solid rgba(0,0,0,.06); margin:8px 0; }
-.bbig { display:flex; justify-content:space-between; }
-.bbn { font-size:22px; font-weight:900; line-height:1; font-family:sans-serif; color:rgba(0,0,0,.7); }
-.bbl { font-size:9px; color:rgba(0,0,0,.22); letter-spacing:.2em; font-family:sans-serif; }
+.bt { font-size: 0.52rem; letter-spacing: 0.5em; color: rgba(0,0,0,0.2); margin-bottom: 0.8rem; }
+.br { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.48rem; }
+.bl { font-size: 0.58rem; color: rgba(0,0,0,0.4); width: 3.8rem; flex-shrink: 0; }
+.btrack { flex:1; height:5px; background:rgba(0,0,0,0.06); border-radius:3px; overflow:hidden; }
+.bfill  { height:100%; border-radius:3px; width:0%; transition: width 0.5s ease; }
+.bv { font-family:'DotGothic16',monospace; font-size:0.58rem; color:rgba(0,0,0,0.35); width:1.6rem; text-align:right; }
+.bdiv { border:none; border-top:1px solid rgba(0,0,0,0.06); margin:0.6rem 0; }
+.bbig { display:flex; justify-content:space-around; }
+.bbig-n {
+  font-family:'Rampart One',sans-serif; font-size:1.75rem; line-height:1; text-align:center;
+  background: linear-gradient(135deg,#e85d8a,#f7a23e);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.bbig-l { font-size:0.48rem; color:rgba(0,0,0,0.22); letter-spacing:0.25em; text-align:center; margin-top:2px; }
 
-/* イベントログ */
 #elog {
-  position:absolute;
-  top:16px; right:16px;
-  width:210px;
-  display:flex; flex-direction:column; gap:4px;
+  position: fixed; top: 1.2rem; right: 1.2rem; z-index: 20;
+  width: 210px; display: flex; flex-direction: column; gap: 0.28rem;
+  pointer-events: none;
 }
 .eitem {
-  font-size:11px; line-height:1.5;
-  padding:5px 12px;
-  background:rgba(255,255,255,0.82);
-  border-radius:999px;
-  border-left:3px solid #e8507a;
-  box-shadow:0 1px 8px rgba(0,0,0,0.06);
-  color:rgba(0,0,0,.6);
-  font-family:sans-serif;
-  animation:ein .3s ease forwards;
-  opacity:0;
+  font-size: 0.62rem; line-height: 1.55;
+  padding: 0.3rem 0.85rem;
+  background: rgba(255,255,255,0.85);
+  border-radius: 18px; border-left: 3px solid;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  animation: fin 0.3s ease forwards; opacity: 0;
+  color: rgba(0,0,0,0.6);
 }
-@keyframes ein { from{opacity:0;transform:translateX(12px)} to{opacity:1;transform:none} }
+@keyframes fin { from{opacity:0;transform:translateX(12px)} to{opacity:1;transform:none} }
 
-/* ドラマ */
 #drama {
-  position:absolute; inset:0;
-  display:flex; align-items:center; justify-content:center;
-  opacity:0; transition:opacity .35s;
-  pointer-events:none;
+  position: fixed; inset: 0; z-index: 30;
+  pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.35s;
 }
-#drama.on { opacity:1; }
+#drama.on { opacity: 1; }
 #dtext {
-  font-size:clamp(2.5rem,9vw,5.5rem);
-  font-weight:900;
-  font-family:sans-serif;
-  letter-spacing:.35em;
-  color:#1a1a1a;
-  text-align:center;
+  font-family: 'Zen Antique', serif;
+  font-size: clamp(2.5rem,10vw,6rem);
+  letter-spacing: 0.4em; color: #1a1a1a;
+  text-align: center; line-height: 1.3;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.08);
 }
 
-/* ヒント */
-#hint {
-  position:absolute;
-  bottom:20px; left:50%;
-  transform:translateX(-50%);
-  font-size:10px; letter-spacing:.35em;
-  color:rgba(0,0,0,.2);
-  white-space:nowrap;
-  font-family:sans-serif;
+.bpop {
+  position: fixed; pointer-events: none; z-index: 25;
+  font-family: 'Hachi Maru Pop', cursive; font-size: 1.1rem;
+  animation: bpop 1.8s ease forwards;
 }
+@keyframes bpop {
+  0%  { opacity:1; transform:translateY(0) scale(0.8); }
+  30% { transform:translateY(-24px) scale(1.2); }
+  100%{ opacity:0; transform:translateY(-70px) scale(0.9); }
+}
+
+#hint {
+  position: fixed; bottom: 1.6rem; left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.56rem; letter-spacing: 0.3em;
+  color: rgba(0,0,0,0.18); white-space: nowrap; z-index: 20;
+  pointer-events: none;
+}
+
+/* ===== つぶやきバブル ===== */
+.whisper {
+  position: fixed;
+  pointer-events: none;
+  z-index: 15;
+  font-family: 'Hachi Maru Pop', 'M PLUS Rounded 1c', cursive, sans-serif;
+  font-size: 0.62rem;
+  line-height: 1.5;
+  color: rgba(30,20,10,0.75);
+  background: rgba(255,255,255,0.88);
+  border-radius: 12px 12px 12px 2px;
+  padding: 0.28rem 0.6rem;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.07);
+  white-space: nowrap;
+  max-width: 140px;
+  white-space: normal;
+  animation: whisperAnim 3.2s ease forwards;
+  transform-origin: bottom left;
+}
+.whisper::after {
+  content: '';
+  position: absolute;
+  bottom: -5px; left: 8px;
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid rgba(255,255,255,0.88);
+}
+@keyframes whisperAnim {
+  0%   { opacity:0; transform: scale(0.7) translateY(4px); }
+  12%  { opacity:1; transform: scale(1) translateY(0); }
+  75%  { opacity:1; transform: translateY(-6px); }
+  100% { opacity:0; transform: translateY(-18px); }
+}
+
+/* ===== 音楽コントロール ===== */
+#audio-btn {
+  position: fixed; bottom: 1.6rem; right: 1.6rem;
+  z-index: 20;
+  width: 2.4rem; height: 2.4rem;
+  background: rgba(255,255,255,0.82);
+  border: none; border-radius: 50%;
+  font-size: 1rem; cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+#audio-btn:hover { transform: scale(1.1); background: rgba(255,255,255,0.95); }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 
-<div id="ui">
-  <div id="mode-bar">
-    <button class="mbtn on" id="men"  onclick="setMode('en')">💛 縁結び</button>
-    <button class="mbtn"    id="mze"  onclick="setMode('ze')">✂️ 引き離し</button>
-    <button class="mbtn"    id="mwa"  onclick="setMode('wa')">👁 観察</button>
-  </div>
-
-  <div id="baro">
-    <div class="bt">WORLD STATE</div>
-    <div class="br"><div class="bl">💛 縁結び</div><div class="btr"><div class="bf" id="f-en" style="background:linear-gradient(90deg,#e8507a,#f5a623)"></div></div><div class="bv" id="v-en">0</div></div>
-    <div class="br"><div class="bl">✂️ 引き離し</div><div class="btr"><div class="bf" id="f-ze" style="background:linear-gradient(90deg,#5040e8,#a020cc)"></div></div><div class="bv" id="v-ze">0</div></div>
-    <div class="br"><div class="bl">🐟 個体数</div><div class="btr"><div class="bf" id="f-po" style="background:linear-gradient(90deg,#22c55e,#86efac)"></div></div><div class="bv" id="v-po">0</div></div>
-    <div class="br"><div class="bl">💞 恋愛中</div><div class="btr"><div class="bf" id="f-lo" style="background:linear-gradient(90deg,#f59e0b,#fde68a)"></div></div><div class="bv" id="v-lo">0</div></div>
-    <div class="br"><div class="bl">🌀 多様性</div><div class="btr"><div class="bf" id="f-di" style="background:linear-gradient(90deg,#06b6d4,#a5f3fc)"></div></div><div class="bv" id="v-di">0</div></div>
-    <hr class="bdiv">
-    <div class="bbig">
-      <div><div class="bbn" id="n-ma">0</div><div class="bbl">婚姻</div></div>
-      <div><div class="bbn" id="n-ge">1</div><div class="bbl">世代</div></div>
-      <div><div class="bbn" id="n-bi">0</div><div class="bbl">誕生</div></div>
-    </div>
-  </div>
-
-  <div id="elog"></div>
-  <div id="drama"><div id="dtext"></div></div>
-  <div id="hint">縁結びモードでクリック → 出逢いを作る　／　✂️モードでクリック → 縁を断ち切る　／　SPACEで召喚</div>
+<div id="panel">
+  <button class="gbtn on" id="b-en"  onclick="setMode('en')">💛 縁結び</button>
+  <button class="gbtn"    id="b-cut" onclick="setMode('cut')">✂️ 引き離し</button>
+  <button class="gbtn"    id="b-see" onclick="setMode('see')">👁 観察</button>
 </div>
 
+<div id="baro">
+  <div class="bt">ECOSYSTEM</div>
+  <div class="br"><div class="bl">💛 縁結び</div><div class="btrack"><div class="bfill" id="fl-en"   style="background:linear-gradient(90deg,#e85d8a,#f7a23e)"></div></div><div class="bv" id="vl-en">0</div></div>
+  <div class="br"><div class="bl">✂️ 引き離し</div><div class="btrack"><div class="bfill" id="fl-cut" style="background:linear-gradient(90deg,#5b4cff,#a020e0)"></div></div><div class="bv" id="vl-cut">0</div></div>
+  <div class="br"><div class="bl">🌿 個体数</div><div class="btrack"><div class="bfill" id="fl-pop"  style="background:linear-gradient(90deg,#22c55e,#86efac)"></div></div><div class="bv" id="vl-pop">0</div></div>
+  <div class="br"><div class="bl">💒 恋愛中</div><div class="btrack"><div class="bfill" id="fl-love" style="background:linear-gradient(90deg,#f59e0b,#fde68a)"></div></div><div class="bv" id="vl-love">0</div></div>
+  <div class="br"><div class="bl">🌀 多様性</div><div class="btrack"><div class="bfill" id="fl-div"  style="background:linear-gradient(90deg,#06b6d4,#a5f3fc)"></div></div><div class="bv" id="vl-div">0</div></div>
+  <hr class="bdiv">
+  <div class="bbig">
+    <div><div class="bbig-n" id="bn-mar">0</div><div class="bbig-l">婚姻</div></div>
+    <div><div class="bbig-n" id="bn-gen">1</div><div class="bbig-l">世代</div></div>
+    <div><div class="bbig-n" id="bn-birth">0</div><div class="bbig-l">誕生</div></div>
+  </div>
+</div>
+
+<div id="elog"></div>
+<div id="drama"><div id="dtext"></div></div>
+<button id="audio-btn" onclick="toggleAudio()" title="音楽 ON/OFF">🔇</button>
+<div id="hint">💛縁結びでクリック → 出逢いを作る　／　✂️引き離しでクリック → 縁を断つ　／　SPACEで召喚</div>
+
 <script>
-// ---- キャンバス ----
-const cv  = document.getElementById('c');
-const ctx = cv.getContext('2d');
-function resize() { cv.width = innerWidth; cv.height = innerHeight; }
-resize();
-window.addEventListener('resize', resize);
+(function() {
+  "use strict";
 
-// ---- 設定 ----
-const MAX = 80;
-let godMode = 'en';
-let marriages = 0, births = 0, maxGen = 1, separations = 0;
+  // --- Canvas ---
+  var canvas = document.getElementById('c');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width  = window.innerWidth;
+  var H = canvas.height = window.innerHeight;
+  window.addEventListener('resize', function() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  });
 
-// ---- カラーグループ（任天堂カラー） ----
-const GRP = [
-  { chars:['愛','恋','情','慕','絆','縁'], r:232,g:60,b:100,  gr:255,gg:140,gb:180 },
-  { chars:['光','明','輝','晴','朗','暉'], r:240,g:185,b:0,   gr:255,gg:225,gb:80  },
-  { chars:['生','活','育','栄','盛','萌'], r:30, g:180,b:50,   gr:100,gg:240,gb:120 },
-  { chars:['水','流','海','泳','波','潮'], r:20, g:130,b:255,  gr:90, gg:200,gb:255 },
-  { chars:['火','炎','燃','焦','灼','熱'], r:255,g:85, b:10,   gr:255,gg:160,gb:70  },
-  { chars:['影','暗','霧','昏','玄','蔽'], r:130,g:50, b:230,  gr:180,gg:110,gb:255 },
-  { chars:['風','気','雲','霞','漂','爽'], r:0,  g:195,b:195,  gr:80, gg:240,gb:240 },
-  { chars:['土','山','岩','地','根','礎'], r:170,g:105,b:35,   gr:220,gg:158,gb:75  },
-];
+  // --- Groups ---
+  var GROUPS = [
+    { chars:['愛','恋','情','慕','絆','縁'], r:232, g:70,  b:110 },
+    { chars:['光','明','輝','晴','朗','暉'], r:240, g:190, b:10  },
+    { chars:['生','活','育','栄','盛','萌'], r:34,  g:180, b:60  },
+    { chars:['水','流','海','泳','波','潮'], r:30,  g:140, b:255 },
+    { chars:['火','炎','燃','焦','灼','熱'], r:255, g:90,  b:20  },
+    { chars:['影','暗','霧','昏','玄','蔽'], r:130, g:60,  b:230 },
+    { chars:['風','気','雲','霞','漂','爽'], r:0,   g:200, b:200 },
+    { chars:['土','山','岩','地','根','礎'], r:170, g:110, b:40  },
+  ];
 
-// フォント（システムフォントのみ）
-const FONTS = [
-  '900 {sz}px "HiraKakuProN-W6","ヒラギノ角ゴ ProN W6",sans-serif',
-  '{sz}px "HiraMinProN-W6","ヒラギノ明朝 ProN W6",serif',
-  '700 {sz}px "YuGothic","游ゴシック",sans-serif',
-  '{sz}px "YuMincho","游明朝",serif',
-  '900 {sz}px "NotoSansJP-Black","Noto Sans JP",sans-serif',
-  '700 {sz}px sans-serif',
-  '{sz}px serif',
-];
+  var ANCIENT = ['𠆢','𠂉','𠂇','𡗗'];
 
-function getFont(fi, sz) {
-  return FONTS[fi].replace(/\{sz\}/g, sz);
-}
+  var FONTS = [
+    "'M PLUS Rounded 1c', sans-serif",
+    "'Hachi Maru Pop', cursive",
+    "'Zen Antique', serif",
+    "'Rampart One', sans-serif",
+    "'DotGothic16', monospace",
+  ];
 
-// 引力マップ
-const ATT = {0:[1,2,3],1:[0,2,6],2:[0,3,7],3:[2,4,6],4:[1,5,7],5:[4,6,3],6:[1,3,7],7:[2,4,5]};
-const REP = {0:[5],1:[5],2:[4],3:[7],4:[2],5:[0],6:[5],7:[3]};
+  var ATTRACT = {
+    0:[1,2,3], 1:[0,2,6], 2:[0,3,7], 3:[2,6,4],
+    4:[1,5,7], 5:[4,6,3], 6:[1,3,7], 7:[2,4,5]
+  };
 
-// 合成表
-const MERGE = {
-  '愛恋':'艶','愛情':'慈','愛光':'煌','恋光':'炫','光明':'輝',
-  '生水':'泳','生活':'命','水流':'漣','火炎':'焔','影水':'淵',
-  '愛生':'慈','光水':'瀬','風水':'涼','火水':'湯','土水':'潤',
-  '愛風':'馨','生風':'薫','光土':'陽','影火':'燃','土山':'峰',
-  '光火':'爍','影光':'曖','恋生':'春','水影':'深','火土':'溶',
-};
+  var MERGE = {
+    '愛恋':'艶','愛情':'慈','愛光':'煌','恋光':'炫','光明':'輝',
+    '生水':'泳','生活':'命','水流':'漣','火炎':'焔','影水':'淵',
+    '愛生':'慈','光水':'瀬','風水':'涼','火水':'湯','土水':'潤',
+    '愛風':'馨','生風':'薫','光土':'陽','影火':'燃','土山':'峰',
+    '光生':'暉','水海':'溟','火土':'溶','風気':'漂',
+  };
 
-// ---- クリーチャー ----
-let creatures = [];
+  // --- つぶやきデータ ---
+  // グループ別・状態別のつぶやき
+  var WHISPERS = {
+    // 愛グループ
+    '愛': { alone:['だれかそこにいる？','きみのことが忘れられない','どこにいるの…','ずっとそばにいたい','会いたいな'],
+            partner:['もっと近くに来て','ねえ、気づいてる？','心がはずむ','あなたといると温かい'],
+            repelled:['どうして…','また離れちゃった','待って…'] },
+    '恋': { alone:['あの子、どこ行ったかな','胸がいっぱい','好きって言えない','ときめきが止まらない'],
+            partner:['ずっと見てた','もしかして、わたしのこと？','どきどきする'],
+            repelled:['え、なんで？','もう少しだったのに'] },
+    '情': { alone:['しみじみするなあ','温もりが欲しい','誰かそばにいてほしい'],
+            partner:['なんか落ち着く','あなたといると安心する'],
+            repelled:['つらい…'] },
+    '慕': { alone:['あこがれるなあ','遠くから見てるだけでいい','好きだよ、言えないけど'],
+            partner:['うれしい、気づいてくれた'] ,
+            repelled:['やっぱり届かなかったか'] },
+    '絆': { alone:['つながりって大事だよな','みんなどこいった'],
+            partner:['これが縁というやつか'],
+            repelled:['絆が…ほどけた'] },
+    '縁': { alone:['不思議な引力を感じる','糸が見える気がする'],
+            partner:['ほら、やっぱり引き合った'],
+            repelled:['縁は切れないはず…'] },
+    // 光グループ
+    '光': { alone:['もっと輝けるはず','照らしてあげたい誰かがいる','曇り空はつまらない'],
+            partner:['きみを照らしてあげる','ふたりで輝こう'],
+            repelled:['光が揺れてる'] },
+    '明': { alone:['夜明けを待ってる','明るい場所へ行こう'],
+            partner:['きみといると世界が明るい'],
+            repelled:['急に暗くなった気がする'] },
+    '輝': { alone:['もっと輝きたい','見てて、ぜったい光る'],
+            partner:['きみの隣でかがやける'],
+            repelled:['くすんじゃった…'] },
+    '晴': { alone:['今日もいい天気！','気持ちいいなあ'],
+            partner:['ふたりいれば晴れ晴れする'],
+            repelled:['曇ってきた…'] },
+    '朗': { alone:['ポジティブにいこう！','笑ってればいいことある'],
+            partner:['きみといると笑える'],
+            repelled:['あれ、なんか寂しくなった'] },
+    '暉': { alone:['かすかな光でも届く','遠くても輝ける'],
+            partner:['ここにいるよ'],
+            repelled:['遠くなった…'] },
+    // 生グループ
+    '生': { alone:['生きてるってすごい','もっと育ちたい','ここにいるぞ！'],
+            partner:['いっしょに育とう','ふたりで生きていこう'],
+            repelled:['生命力が落ちた気がする'] },
+    '活': { alone:['元気いっぱい！','動き続けるのが好き','止まれない！'],
+            partner:['活力が倍になった！'],
+            repelled:['勢いが削がれた…'] },
+    '育': { alone:['もっと大きくなれる','誰かに育ててもらいたい'],
+            partner:['きみといると伸びる気がする'],
+            repelled:['成長が止まる気がする'] },
+    '栄': { alone:['栄えるのが夢だ','いつか花開く'],
+            partner:['ふたりで栄えよう'],
+            repelled:['衰えそう…'] },
+    '盛': { alone:['もっと盛り上がろうぜ！','エネルギーが余ってる'],
+            partner:['最高に盛り上がってる'],
+            repelled:['テンション下がった'] },
+    '萌': { alone:['ちっちゃいけどいるよ','春が来た気分','芽吹いてきた！'],
+            partner:['きみのそばで育ちたい'],
+            repelled:['霜が降りた気がする'] },
+    // 水グループ
+    '水': { alone:['どこへでも流れていける','静かでいいな','流れに身を任せよう'],
+            partner:['いっしょに流れよう','溶け合いたい'],
+            repelled:['波紋が消えた…'] },
+    '流': { alone:['流れを感じる','どこか遠くへ行きたい'],
+            partner:['一緒に流れる'],
+            repelled:['流れが変わった'] },
+    '海': { alone:['深いなあ','広いよ、でも孤独','波の音が好き'],
+            partner:['広い海をふたりで'],
+            repelled:['潮が引いた'] },
+    '泳': { alone:['泳ぎ続けるしかない','疲れたけど止まれない'],
+            partner:['きみと泳ぐのは楽しい'],
+            repelled:['流れに逆らえない'] },
+    '波': { alone:['寄せては返す…','波があるから面白い'],
+            partner:['波長が合う！'],
+            repelled:['波がくだけた'] },
+    '潮': { alone:['引き時かな','満ちてきてる感じがする'],
+            partner:['潮の流れが変わった気がする'],
+            repelled:['引き潮だ…'] },
+    // 火グループ
+    '火': { alone:['燃えてるぞ！','誰かを温めたい','消えたくない！'],
+            partner:['ふたりで燃え上がろう','熱くなってきた！'],
+            repelled:['炎が揺れてる…'] },
+    '炎': { alone:['ぼくは消えない','激しく燃える'],
+            partner:['きみといると炎が大きくなる'],
+            repelled:['ちっ、水がかかった'] },
+    '燃': { alone:['燃え上がる準備はできてる','熱いぞ！'],
+            partner:['最高潮！'],
+            repelled:['鎮火した…'] },
+    '焦': { alone:['ちょっと焦ってる','あせるな、あせるな'],
+            partner:['落ち着いた。きみがいれば'],
+            repelled:['また焦ってきた'] },
+    '灼': { alone:['焼き尽くしたい衝動','熱すぎる自分'],
+            partner:['きみを照らしたい'],
+            repelled:['鋭い痛み'] },
+    '熱': { alone:['常に熱い！','冷めるのが怖い'],
+            partner:['熱量が倍になった'],
+            repelled:['急に冷えた…'] },
+    // 影グループ
+    '影': { alone:['誰も見てない…','光の裏にいつもいる','静かでいい'],
+            partner:['珍しい、近づいてくるやつがいる','光があるから影がある'],
+            repelled:['また独りか'] },
+    '暗': { alone:['暗い方が落ち着く','ひとりでいい、たぶん'],
+            partner:['…なんか変な感じ、悪くない'],
+            repelled:['やっぱり暗闇に戻る'] },
+    '霧': { alone:['何も見えない','ぼんやりとそこにいる'],
+            partner:['霧の中でもきみが見える'],
+            repelled:['また霧に消えた'] },
+    '昏': { alone:['夕暮れどきが好き','黄昏れてる'],
+            partner:['薄暮の中で出逢った'],
+            repelled:['また夜になる'] },
+    '玄': { alone:['深淵を覗いている','言葉にならない何か'],
+            partner:['奥底で響く'],
+            repelled:['闇に帰る'] },
+    '蔽': { alone:['隠れているのが安心','ヴェールの向こうから見てる'],
+            partner:['…見えてる？ここにいるよ'],
+            repelled:['また覆われた'] },
+    // 風グループ
+    '風': { alone:['どこにでも行ける','自由だ！','誰かに届けたい何かがある'],
+            partner:['いっしょに飛ぼう','風になれ'],
+            repelled:['向かい風になった'] },
+    '気': { alone:['気になることがある','なんとなく、ふわふわ'],
+            partner:['気が合う！'],
+            repelled:['気が散った'] },
+    '雲': { alone:['ゆったり流れていく','形が変わり続ける'],
+            partner:['ふわっと包んであげたい'],
+            repelled:['散り散りになった'] },
+    '霞': { alone:['春霞みたい、はかない','ぼんやり存在している'],
+            partner:['霞の中で出逢った感じ'],
+            repelled:['消えていく…'] },
+    '漂': { alone:['漂うのが好き','どこでもいい、ただ流れる'],
+            partner:['同じ方向に漂っている'],
+            repelled:['また漂いはじめた'] },
+    '爽': { alone:['きもちいい！','清々しい朝','さっぱりしてる'],
+            partner:['きみといると爽快！'],
+            repelled:['じめっとした…'] },
+    // 土グループ
+    '土': { alone:['どっしりしてる','根を張りたい','ここを離れたくない'],
+            partner:['ふたりでここに根を張ろう'],
+            repelled:['大地が揺れた'] },
+    '山': { alone:['高みを目指したい','どっしりとここにいる','孤高もいいな'],
+            partner:['峰でまた逢おう'],
+            repelled:['崩れそうな感じ'] },
+    '岩': { alone:['びくともしない','固いのが誇りだ'],
+            partner:['きみも固い、いいな'],
+            repelled:['ひびが入った気がする'] },
+    '地': { alone:['万物を支えている','縁の下の力持ち'],
+            partner:['土台を一緒に作ろう'],
+            repelled:['地盤が揺らいだ'] },
+    '根': { alone:['深く、静かに伸びていく','誰も見てないけどいる'],
+            partner:['根がからまっていく感じ'],
+            repelled:['根が切れそう'] },
+    '礎': { alone:['土台であることが喜び','存在すること自体が役割'],
+            partner:['ふたりで礎になろう'],
+            repelled:['揺らいだ…'] },
+  };
 
-class K {
-  constructor(o={}) {
-    this.gi  = o.gi  ?? (Math.floor(Math.random() * GRP.length));
-    this.g   = GRP[this.gi];
-    this.ch  = o.ch  ?? this.g.chars[Math.floor(Math.random() * this.g.chars.length)];
-    this.fi  = o.fi  ?? Math.floor(Math.random() * FONTS.length);
-    this.gen = o.gen ?? 1;
-    this.hyb = o.hyb ?? false;
-    this.x   = o.x  ?? (60 + Math.random() * (innerWidth  - 120));
-    this.y   = o.y  ?? (60 + Math.random() * (innerHeight - 120));
-    this.vx  = (Math.random() - .5) * 1.5;
-    this.vy  = (Math.random() - .5) * 1.5;
-    this.spd = .45 + Math.random() * .7;
-    this.sz  = o.sz ?? (24 + Math.random() * 20);
+  // デフォルトつぶやき（辞書にない文字）
+  var WHISPER_DEFAULT = {
+    alone:    ['…','ここにいる','どこへ行こう','不思議な感じ','ふわふわする'],
+    partner:  ['…なんか近い','引き合う','気になる'],
+    repelled: ['あ、離れた','どこへ…','また今度'],
+  };
 
-    if (o.hyb && o.c1 && o.c2) {
-      this.r = (o.c1[0]+o.c2[0])>>1;
-      this.g2= (o.c1[1]+o.c2[1])>>1;
-      this.b = (o.c1[2]+o.c2[2])>>1;
+  // つぶやきを取得
+  function getWhisper(char, state) {
+    var pool = WHISPERS[char] ? WHISPERS[char][state] : null;
+    if (!pool || pool.length === 0) pool = WHISPER_DEFAULT[state];
+    return pool[rndInt(pool.length)];
+  }
+
+  // DOM バブル生成
+  function spawnWhisper(creature) {
+    var state = creature.partner ? 'partner' : 'alone';
+    if (creature.repelCoolWhisper && creature.repelCoolWhisper > 0) state = 'repelled';
+    var text = getWhisper(creature.char, state);
+    var d = document.createElement('div');
+    d.className = 'whisper';
+    d.textContent = text;
+    // キャラの少し上に配置、左右ランダムにずらす
+    var offsetX = rnd(-20, 20);
+    d.style.left = (creature.px - 10 + offsetX) + 'px';
+    d.style.top  = (creature.py - creature.sz - 28) + 'px';
+    // グループ色でボーダー
+    d.style.borderBottom = '2px solid rgb('+creature.cr+','+creature.cg+','+creature.cb+')';
+    document.body.appendChild(d);
+    setTimeout(function() { d.remove(); }, 3300);
+  }
+
+  // --- State ---
+  var creatures  = [];
+  var marriages  = 0;
+  var births     = 0;
+  var maxGen     = 1;
+  var cuts       = 0;
+  var MAX_POP    = 75;
+  var godMode    = 'en';
+  var mouseX     = W / 2;
+  var mouseY     = H / 2;
+  var frame      = 0;
+  var lastMarFrame = 0;
+  var ripples    = [];
+  var particles  = []; // 婚姻パーティクル
+  var evLog      = [];
+  var dramaTimer = null;
+
+  document.addEventListener('mousemove', function(e) {
+    mouseX = e.clientX; mouseY = e.clientY;
+  });
+
+  // --- Mode ---
+  window.setMode = function(m) {
+    godMode = m;
+    document.querySelectorAll('.gbtn').forEach(function(b) { b.classList.remove('on'); });
+    document.getElementById('b-' + m).classList.add('on');
+  };
+
+  // --- Creature ---
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function rndInt(n) { return Math.floor(Math.random() * n); }
+
+  function Creature(opts) {
+    opts = opts || {};
+    this.gi   = (opts.gi !== undefined) ? opts.gi : rndInt(GROUPS.length);
+    var grp   = GROUPS[this.gi];
+
+    if (opts.char) {
+      this.char = opts.char;
+    } else if (Math.random() < 0.04) {
+      this.char = ANCIENT[rndInt(ANCIENT.length)];
     } else {
-      this.r = this.g.r; this.g2 = this.g.g; this.b = this.g.b;
+      this.char = grp.chars[rndInt(grp.chars.length)];
     }
 
-    this.al  = 0;
-    this.tal = .78 + Math.random() * .18;
-    this.age = 0;
-    this.max = 1600 + Math.random() * 2000;
-    this.wa  = .25 + Math.random() * .55;
-    this.wf  = .016 + Math.random() * .024;
-    this.wo  = Math.random() * Math.PI * 2;
-    this.gph = Math.random() * Math.PI * 2;
-    this.wob = Math.random() * Math.PI * 2;
-    this.wos = .015 + Math.random() * .025;
-    this.trail = [];
+    this.font   = opts.font || FONTS[rndInt(FONTS.length)];
+    this.gen    = opts.gen  || 1;
+    this.hybrid = !!opts.hybrid;
+
+    this.px = (opts.x !== undefined) ? opts.x : rnd(50, W-50);
+    this.py = (opts.y !== undefined) ? opts.y : rnd(50, H-50);
+    this.pvx = rnd(-0.7, 0.7);
+    this.pvy = rnd(-0.7, 0.7);
+    this.maxSpd = rnd(0.45, 1.15);
+
+    if (this.hybrid && opts.pr !== undefined) {
+      this.cr = (opts.pr + grp.r) >> 1;
+      this.cg = (opts.pg + grp.g) >> 1;
+      this.cb = (opts.pb + grp.b) >> 1;
+    } else {
+      this.cr = grp.r; this.cg = grp.g; this.cb = grp.b;
+    }
+
+    this.sz     = opts.sz || rnd(24, 44);
+    this.alpha  = 0;
+    this.tAlpha = rnd(0.75, 0.95);
+    this.age    = 0;
+    this.maxAge = rnd(1500, 3500);
+
+    this.wAmp   = rnd(0.25, 0.80);
+    this.wFreq  = rnd(0.016, 0.040);
+    this.wOff   = rnd(0, Math.PI * 2);
+    this.glowPh = rnd(0, Math.PI * 2);
+    this.wobble = rnd(0, Math.PI * 2);
+    this.wobSpd = rnd(0.015, 0.040);
+
+    this.trail   = [];
     this.partner = null;
     this.married = false;
-    this.mcool  = 180 + Math.floor(Math.random() * 120);
-    this.pull   = { x:0, y:0, s:0 };
+    this.mCool   = rndInt(120) + 180;
+
+    this.pullX   = 0;
+    this.pullY   = 0;
+    this.pullStr = 0;
+
+    // つぶやき
+    this.whisperCool = rndInt(200) + 300; // フォント読み込み待ちバッファ
+    this.whisperInterval = rndInt(220) + 180;
+    this.repelCoolWhisper = 0;
   }
 
-  update(fr) {
+  Creature.prototype.update = function() {
     this.age++;
-    this.gph += .055;
-    this.wob += this.wos;
-    this.mcool = Math.max(0, this.mcool - 1);
+    this.glowPh += 0.055;
+    this.wobble += this.wobSpd;
+    if (this.mCool > 0) this.mCool--;
+    if (this.repelCoolWhisper > 0) this.repelCoolWhisper--;
 
-    if      (this.age < 80)              this.al = (this.age/80) * this.tal;
-    else if (this.age > this.max - 80)   this.al = Math.max(0, (this.max-this.age)/80 * this.tal);
-    else                                 this.al = this.tal;
+    // つぶやきタイマー
+    this.whisperCool--;
+    if (this.whisperCool <= 0 && !this.married && this.alpha > 0.5) {
+      spawnWhisper(this);
+      this.whisperCool = this.whisperInterval + rndInt(120);
+    }
 
-    let ax=0, ay=0;
-    const W = cv.width, H = cv.height;
+    if (this.age < 80) {
+      this.alpha = (this.age / 80) * this.tAlpha;
+    } else if (this.age > this.maxAge - 80) {
+      this.alpha = Math.max(0, (this.maxAge - this.age) / 80 * this.tAlpha);
+    } else {
+      this.alpha = this.tAlpha;
+    }
 
-    for (const o of creatures) {
+    var ax = 0, ay = 0;
+    for (var i = 0; i < creatures.length; i++) {
+      var o = creatures[i];
       if (o === this || o.married) continue;
-      const dx = o.x-this.x, dy = o.y-this.y;
-      const d = Math.hypot(dx,dy) || 1;
-      if (d > 380) continue;
-      const nd=dx/d, ne=dy/d;
-      const att = (ATT[this.gi]||[]).includes(o.gi);
-      const rep = (REP[this.gi]||[]).includes(o.gi);
-      if      (att && d<240) { const f=(d<40?-.01:.016)*(1-d/240); ax+=nd*f; ay+=ne*f; }
-      else if (rep && d<180) { const f=-.02*(1-d/180); ax+=nd*f; ay+=ne*f; }
-      else if (o.gi===this.gi && d<70) { ax-=nd*.01; ay-=ne*.01; }
+      var dx = o.px - this.px;
+      var dy = o.py - this.py;
+      var dist = Math.sqrt(dx*dx + dy*dy) || 1;
+      if (dist > 380) continue;
+      var ndx = dx / dist, ndy = dy / dist;
+      var attList = ATTRACT[this.gi] || [];
+      var isAtt  = attList.indexOf(o.gi) >= 0;
+      var isSame = o.gi === this.gi;
+      if (isAtt && dist < 240) {
+        var f = 0.016 * (1 - dist / 240);
+        ax += ndx * f; ay += ndy * f;
+      } else if (isSame && dist < 70) {
+        ax -= ndx * 0.01; ay -= ndy * 0.01;
+      }
     }
 
-    if (this.pull.s > .005) {
-      const dx=this.pull.x-this.x, dy=this.pull.y-this.y, d=Math.hypot(dx,dy)||1;
-      ax += dx/d * this.pull.s;
-      ay += dy/d * this.pull.s;
-      this.pull.s *= .92;
+    if (this.pullStr > 0.005) {
+      var pdx = this.pullX - this.px;
+      var pdy = this.pullY - this.py;
+      var pd  = Math.sqrt(pdx*pdx + pdy*pdy) || 1;
+      ax += (pdx / pd) * this.pullStr;
+      ay += (pdy / pd) * this.pullStr;
+      this.pullStr *= 0.93;
     }
 
-    const sp=Math.hypot(this.vx,this.vy)||1;
-    const px=-this.vy/sp, py=this.vx/sp;
-    const w=Math.sin(fr*this.wf+this.wo)*this.wa;
-    this.vx += ax + px*w*.05 + Math.sin(this.wob)*.003;
-    this.vy += ay + py*w*.05 + Math.cos(this.wob*.7)*.003;
+    var spd = Math.sqrt(this.pvx*this.pvx + this.pvy*this.pvy) || 1;
+    var perpX = -this.pvy / spd, perpY = this.pvx / spd;
+    var wave  = Math.sin(frame * this.wFreq + this.wOff) * this.wAmp;
+    this.pvx += ax + perpX * wave * 0.05 + Math.sin(this.wobble) * 0.003;
+    this.pvy += ay + perpY * wave * 0.05 + Math.cos(this.wobble * 0.7) * 0.003;
 
-    const s=Math.hypot(this.vx,this.vy)||1;
-    if (s > this.spd) { this.vx=this.vx/s*this.spd; this.vy=this.vy/s*this.spd; }
+    var s = Math.sqrt(this.pvx*this.pvx + this.pvy*this.pvy) || 1;
+    if (s > this.maxSpd) {
+      this.pvx = this.pvx / s * this.maxSpd;
+      this.pvy = this.pvy / s * this.maxSpd;
+    }
 
-    this.x += this.vx; this.y += this.vy;
-    const m=65;
-    if(this.x<m)this.vx+=.07; if(this.x>W-m)this.vx-=.07;
-    if(this.y<m)this.vy+=.07; if(this.y>H-m)this.vy-=.07;
+    this.px += this.pvx; this.py += this.pvy;
 
-    this.trail.unshift({x:this.x,y:this.y});
+    var margin = 65;
+    if (this.px < margin)   this.pvx += 0.06;
+    if (this.px > W-margin) this.pvx -= 0.06;
+    if (this.py < margin)   this.pvy += 0.06;
+    if (this.py > H-margin) this.pvy -= 0.06;
+
+    this.trail.unshift({ x: this.px, y: this.py });
     if (this.trail.length > 12) this.trail.pop();
-  }
+  };
 
-  draw() {
-    if (this.al <= 0) return;
-    const glow = .45 + .55*Math.sin(this.gph);
-    const rr = Math.min(255, this.r + (this.g.gr - this.r)*.5*glow) | 0;
-    const gg = Math.min(255, this.g2+ (this.g.gg - this.g2)*.5*glow) | 0;
-    const bb = Math.min(255, this.b + (this.g.gb - this.b)*.5*glow) | 0;
+  Creature.prototype.draw = function() {
+    if (this.alpha <= 0) return;
+
+    var glow = 0.45 + 0.55 * Math.sin(this.glowPh);
+    var rr = Math.min(255, this.cr + (255 - this.cr) * 0.35 * glow) | 0;
+    var gg = Math.min(255, this.cg + (255 - this.cg) * 0.35 * glow) | 0;
+    var bb = Math.min(255, this.cb + (255 - this.cb) * 0.35 * glow) | 0;
 
     // 尾
-    for (let i=1; i<this.trail.length; i++) {
-      const t=this.trail[i], p=this.trail[i-1];
-      const a = (1-i/this.trail.length)*this.al*.15;
-      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(t.x,t.y);
-      ctx.strokeStyle = `rgba(${rr},${gg},${bb},${a})`;
-      ctx.lineWidth = (this.trail.length-i)/this.trail.length*4;
+    for (var i = 1; i < this.trail.length; i++) {
+      var t = this.trail[i], p = this.trail[i-1];
+      var ta = (1 - i / this.trail.length) * this.alpha * 0.15;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(t.x, t.y);
+      ctx.strokeStyle = 'rgba('+rr+','+gg+','+bb+','+ta+')';
+      ctx.lineWidth = (this.trail.length - i) / this.trail.length * 3.5;
       ctx.stroke();
     }
 
     // グロー
-    const gr = ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.sz*2.2);
-    gr.addColorStop(0, `rgba(${rr},${gg},${bb},${this.al*.16*glow})`);
-    gr.addColorStop(1, `rgba(${rr},${gg},${bb},0)`);
-    ctx.fillStyle = gr;
-    ctx.beginPath(); ctx.arc(this.x,this.y,this.sz*2.2,0,Math.PI*2); ctx.fill();
+    var grad = ctx.createRadialGradient(this.px, this.py, 0, this.px, this.py, this.sz * 2);
+    grad.addColorStop(0, 'rgba('+rr+','+gg+','+bb+','+(this.alpha*0.18*glow)+')');
+    grad.addColorStop(1, 'rgba('+rr+','+gg+','+bb+',0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(this.px, this.py, this.sz * 2, 0, Math.PI * 2);
+    ctx.fill();
 
     // 文字
     ctx.save();
-    ctx.globalAlpha = this.al;
-    ctx.font = getFont(this.fi, this.sz);
-    ctx.fillStyle = `rgb(${rr},${gg},${bb})`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    const ang = Math.atan2(this.vy,this.vx) * .1;
-    ctx.translate(this.x, this.y); ctx.rotate(ang);
-    if (this.hyb) { ctx.shadowColor=`rgba(${rr},${gg},${bb},.9)`; ctx.shadowBlur=16; }
-    ctx.fillText(this.ch, 0, 0);
+    ctx.globalAlpha = this.alpha;
+    ctx.font = (this.hybrid ? '900 ' : '') + this.sz + 'px ' + this.font;
+    ctx.fillStyle = 'rgb('+rr+','+gg+','+bb+')';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    var ang = Math.atan2(this.pvy, this.pvx) * 0.1;
+    ctx.translate(this.px, this.py);
+    ctx.rotate(ang);
+    if (this.hybrid) {
+      ctx.shadowColor = 'rgb('+rr+','+gg+','+bb+')';
+      ctx.shadowBlur = 14;
+    }
+    ctx.fillText(this.char, 0, 0);
     ctx.restore();
 
     // 縁の糸
-    if (this.partner && this.partner.al>0 && !this.married) {
-      const dx=this.partner.x-this.x, dy=this.partner.y-this.y, d=Math.hypot(dx,dy);
-      if (d<260) {
-        const a=(1-d/260)*.45*this.al;
-        ctx.beginPath(); ctx.moveTo(this.x,this.y);
+    if (this.partner && this.partner.alpha > 0 && !this.married) {
+      var ddx = this.partner.px - this.px;
+      var ddy = this.partner.py - this.py;
+      var dd  = Math.sqrt(ddx*ddx + ddy*ddy);
+      if (dd < 260) {
+        var pa = (1 - dd/260) * 0.5 * this.alpha;
+        ctx.beginPath();
+        ctx.moveTo(this.px, this.py);
         ctx.quadraticCurveTo(
-          (this.x+this.partner.x)/2+dy*.2,
-          (this.y+this.partner.y)/2-dx*.2,
-          this.partner.x, this.partner.y
+          (this.px + this.partner.px)/2 + ddy * 0.2,
+          (this.py + this.partner.py)/2 - ddx * 0.2,
+          this.partner.px, this.partner.py
         );
-        ctx.strokeStyle = `rgba(230,150,50,${a})`;
+        ctx.strokeStyle = 'rgba(230,150,50,' + pa + ')';
         ctx.lineWidth = 1.2;
-        ctx.setLineDash([4,8]); ctx.stroke(); ctx.setLineDash([]);
+        ctx.setLineDash([4, 8]);
+        ctx.stroke();
+        ctx.setLineDash([]);
       }
     }
 
-    // 世代バッジ
+    // 世代
     if (this.gen > 1) {
       ctx.save();
-      ctx.globalAlpha = this.al * .45;
-      ctx.font = `bold 8px sans-serif`;
-      ctx.fillStyle = `rgb(${rr},${gg},${bb})`;
+      ctx.globalAlpha = this.alpha * 0.45;
+      ctx.font = '700 8px "M PLUS Rounded 1c", sans-serif';
+      ctx.fillStyle = 'rgb('+rr+','+gg+','+bb+')';
       ctx.textAlign = 'center';
-      ctx.fillText('G'+this.gen, this.x, this.y+this.sz*.72);
+      ctx.fillText('G'+this.gen, this.px, this.py + this.sz * 0.72);
       ctx.restore();
     }
-
-    // 引力リング
-    if (this.pull.s > .04) {
-      ctx.save();
-      ctx.globalAlpha = this.al * Math.min(1, this.pull.s*4) * .55;
-      ctx.strokeStyle = godMode==='en' ? 'rgba(255,190,50,1)' : 'rgba(100,70,255,1)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(this.x,this.y,this.sz*.62,0,Math.PI*2); ctx.stroke();
-      ctx.restore();
-    }
-  }
-
-  dead() { return this.age >= this.max; }
-}
-
-// ---- 婚姻 ----
-let lastMar = 0;
-
-function tryMarry(a, b, fr) {
-  if (fr - lastMar < 40) return;
-  if (a.married||b.married||a.mcool>0||b.mcool>0) return;
-  if (Math.hypot(a.x-b.x,a.y-b.y) > 28) return;
-  if (a.age < 120 || b.age < 120) return;
-
-  a.married = b.married = true;
-  a.partner = b.partner = null;
-  marriages++; lastMar = fr;
-
-  const nc = mergeChar(a.ch, b.ch);
-  const ng = Math.max(a.gen,b.gen)+1;
-  if (ng > maxGen) maxGen = ng;
-
-  showDrama(`${a.ch} ∞ ${b.ch}`, 800, nc);
-
-  setTimeout(() => {
-    if (creatures.length < MAX) {
-      const gi = Math.random()<.5 ? a.gi : b.gi;
-      const c = new K({
-        ch:nc, gi,
-        fi: Math.random()<.5 ? a.fi : b.fi,
-        x:(a.x+b.x)/2+(Math.random()-.5)*18,
-        y:(a.y+b.y)/2+(Math.random()-.5)*18,
-        gen:ng, hyb:true,
-        c1:[a.r,a.g2,a.b], c2:[b.r,b.g2,b.b],
-        sz:28+Math.random()*16,
-      });
-      creatures.push(c);
-      births++;
-      logEv(`${a.ch} × ${b.ch} → ${nc}　G${ng}`, '#e8507a');
-      birthPop(c.x, c.y, nc, rr(c));
-    }
-    a.max = a.age + 100; b.max = b.age + 100;
-  }, 1000);
-}
-
-function rr(c) {
-  const glow = .7;
-  return [
-    Math.min(255,c.r+(c.g.gr-c.r)*.5*glow)|0,
-    Math.min(255,c.g2+(c.g.gg-c.g2)*.5*glow)|0,
-    Math.min(255,c.b+(c.g.gb-c.g.b)*.5*glow)|0,
-  ];
-}
-
-function mergeChar(a, b) {
-  if (MERGE[a+b]) return MERGE[a+b];
-  if (MERGE[b+a]) return MERGE[b+a];
-  const all = GRP.flatMap(g=>g.chars);
-  const unused = all.filter(c => !creatures.find(cr=>cr.ch===c));
-  return unused.length ? unused[Math.floor(Math.random()*Math.min(6,unused.length))]
-                       : all[Math.floor(Math.random()*all.length)];
-}
-
-// ---- ドラマ ----
-let dtimer = null;
-function showDrama(text, delay, next) {
-  const el=document.getElementById('drama');
-  const tx=document.getElementById('dtext');
-  tx.textContent = text; el.classList.add('on');
-  clearTimeout(dtimer);
-  dtimer = setTimeout(() => {
-    if (next) { tx.textContent=next; setTimeout(()=>el.classList.remove('on'),600); }
-    else el.classList.remove('on');
-  }, delay);
-}
-
-// ---- 誕生ポップ ----
-function birthPop(x, y, ch, col) {
-  const d = document.createElement('div');
-  d.style.cssText = `position:fixed;left:${x-14}px;top:${y-30}px;
-    font-size:18px;font-family:sans-serif;pointer-events:none;z-index:25;
-    color:rgb(${col.join(',')});animation:ein .3s ease forwards;
-    font-weight:900;`;
-  d.textContent = '✨'+ch;
-  document.body.appendChild(d);
-  let t=0, oy=0;
-  const id=setInterval(()=>{
-    t+=16; oy-=1.5;
-    d.style.top = (y-30+oy)+'px';
-    d.style.opacity = Math.max(0,1-t/1600);
-    if(t>1600){clearInterval(id);d.remove();}
-  },16);
-}
-
-// ---- イベントログ ----
-const evs = [];
-function logEv(msg, col='rgba(0,0,0,.55)') {
-  evs.unshift({msg,col}); if(evs.length>7) evs.pop();
-  const el=document.getElementById('elog'); el.innerHTML='';
-  evs.slice(0,5).forEach((e,i)=>{
-    const d=document.createElement('div'); d.className='eitem';
-    d.style.borderColor=e.col;
-    d.style.opacity=(1-i*.16)+'';
-    d.style.animationDelay='0s';
-    d.textContent=e.msg;
-    el.appendChild(d);
-  });
-}
-
-// ---- モード切替 ----
-function setMode(m) {
-  godMode=m;
-  ['en','ze','wa'].forEach(id=>document.getElementById('m'+id).classList.remove('on'));
-  document.getElementById('m'+m).classList.add('on');
-}
-
-// ---- さざ波 ----
-const rips=[];
-function drawRips() {
-  for(let i=rips.length-1;i>=0;i--){
-    const r=rips[i];
-    ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,Math.PI*2);
-    ctx.strokeStyle=`rgba(${r.c},${r.a})`;
-    ctx.lineWidth=1.3; ctx.stroke();
-    r.r+=3; r.a*=.966;
-    if(r.a<.02) rips.splice(i,1);
-  }
-}
-function ripple(x,y,c){rips.push({x,y,r:0,a:.65,c});}
-
-// ---- クリック ----
-cv.addEventListener('click', e => {
-  const cx=e.clientX, cy=e.clientY, R=130;
-  const near=creatures.filter(c=>Math.hypot(c.x-cx,c.y-cy)<R&&!c.married);
-
-  if (godMode==='en') {
-    if (near.length>=2) {
-      const [a,b]=[near[0],near[1]];
-      a.pull={x:b.x,y:b.y,s:.22}; b.pull={x:a.x,y:a.y,s:.22};
-      if(!a.partner&&!b.partner){a.partner=b;b.partner=a;}
-      logEv(`神が ${a.ch} と ${b.ch} の縁を結んだ`,'#e8507a');
-    } else if (near.length===1) {
-      near[0].pull={x:cx,y:cy,s:.15};
-    } else if (creatures.length<MAX) {
-      const c=new K({x:cx+(Math.random()-.5)*20,y:cy+(Math.random()-.5)*20});
-      creatures.push(c);
-      logEv(`「${c.ch}」を召喚した`,'#22c55e');
-    }
-    ripple(cx,cy,'255,175,50');
-  } else if (godMode==='ze') {
-    separations++;
-    if (near.length>0) {
-      for(const c of near){
-        if(c.partner){c.partner.partner=null;c.partner.mcool=300;}
-        c.partner=null; c.mcool=300;
-        const dx=c.x-cx,dy=c.y-cy,d=Math.hypot(dx,dy)||1;
-        c.vx+=dx/d*2.2+(Math.random()-.5)*.5;
-        c.vy+=dy/d*2.2+(Math.random()-.5)*.5;
-      }
-      logEv(`縁を断ち切った（${near.map(c=>c.ch).slice(0,3).join('・')}）`,'#5040e8');
-      showDrama('縁切', 500);
-    }
-    ripple(cx,cy,'100,70,255');
-  }
-});
-
-// ---- キーボード ----
-document.addEventListener('keydown', e=>{
-  if(e.code==='Space'&&!e.repeat){
-    e.preventDefault();
-    if(creatures.length<MAX){
-      const c=new K();
-      creatures.push(c);
-      logEv(`「${c.ch}」が現れた`,'#22c55e');
-    }
-  }
-});
-
-// ---- HUD ----
-function updateHUD(){
-  const alive=creatures.filter(c=>!c.married);
-  const loving=alive.filter(c=>c.partner).length;
-  const uniq=new Set(alive.map(c=>c.ch)).size;
-  const pop=alive.length;
-  const set=(id,pct,val)=>{
-    document.getElementById('f-'+id).style.width=Math.min(100,pct)+'%';
-    document.getElementById('v-'+id).textContent=val;
   };
-  set('en',marriages/30*100,marriages);
-  set('ze',separations/20*100,separations);
-  set('po',pop/MAX*100,pop);
-  set('lo',loving/(pop||1)*100,loving);
-  set('di',uniq/36*100,uniq);
-  document.getElementById('n-ma').textContent=marriages;
-  document.getElementById('n-ge').textContent=maxGen;
-  document.getElementById('n-bi').textContent=births;
-}
 
-// ---- 背景 ----
-function drawBG(){
-  ctx.fillStyle='#efefec';
-  ctx.fillRect(0,0,cv.width,cv.height);
-  ctx.fillStyle='rgba(0,0,0,0.028)';
-  const s=44;
-  for(let x=0;x<cv.width;x+=s)
-    for(let y=0;y<cv.height;y+=s)
-      ctx.fillRect(x,y,1,1);
-}
+  Creature.prototype.isDead = function() {
+    return this.age >= this.maxAge;
+  };
 
-// ---- 補充 ----
-function maintain(){
-  const alive=creatures.filter(c=>!c.married);
-  if(alive.length<18&&creatures.length<MAX){
-    const n=Math.min(4,MAX-creatures.length);
-    for(let i=0;i<n;i++) setTimeout(()=>creatures.push(new K()),i*220);
+  // --- Merge ---
+  function mergeChar(a, b) {
+    if (MERGE[a+b]) return MERGE[a+b];
+    if (MERGE[b+a]) return MERGE[b+a];
+    var all = [];
+    for (var i = 0; i < GROUPS.length; i++) {
+      for (var j = 0; j < GROUPS[i].chars.length; j++) all.push(GROUPS[i].chars[j]);
+    }
+    var unused = all.filter(function(c) {
+      return !creatures.some(function(cr) { return cr.char === c; });
+    });
+    var pool = unused.length > 0 ? unused : all;
+    return pool[rndInt(Math.min(8, pool.length))];
   }
-}
 
-// ---- 初期スポーン ----
-for(let i=0;i<42;i++) setTimeout(()=>creatures.push(new K()),i*80);
+  // --- Marriage ---
+  function tryMarry(a, b) {
+    if (frame - lastMarFrame < 40) return;
+    if (a.married || b.married) return;
+    if (a.mCool > 0 || b.mCool > 0) return;
+    if (a.age < 120 || b.age < 120) return;
+    var d = Math.sqrt((a.px-b.px)*(a.px-b.px)+(a.py-b.py)*(a.py-b.py));
+    if (d > 30) return;
 
-// ---- ループ ----
-let fr=0;
-function loop(){
-  fr++;
-  drawBG();
-  drawRips();
+    a.married = true; b.married = true;
+    a.partner = null; b.partner = null;
+    marriages++;
+    lastMarFrame = frame;
 
-  // パートナー解除
-  for(const c of creatures){
-    if(c.partner&&!c.partner.married&&Math.hypot(c.x-c.partner.x,c.y-c.partner.y)>330){
-      c.partner.partner=null; c.partner=null; c.mcool=120;
+    var nc  = mergeChar(a.char, b.char);
+    var ng  = Math.max(a.gen, b.gen) + 1;
+    if (ng > maxGen) maxGen = ng;
+
+    // パーティクル発火（ほんわか）
+    var mx2 = (a.px + b.px) / 2;
+    var my2 = (a.py + b.py) / 2;
+    spawnMarriageParticles(mx2, my2, a.cr, a.cg, a.cb, b.cr, b.cg, b.cb);
+    playMarriageChime(a.cr, a.cg, a.cb);
+
+    showDrama(a.char + ' ∞ ' + b.char, '#1a1a1a', 750, nc);
+
+    setTimeout(function() {
+      if (creatures.length < MAX_POP) {
+        var gi = Math.random() < 0.5 ? a.gi : b.gi;
+        var grp = GROUPS[gi];
+        var child = new Creature({
+          char: nc, gi: gi,
+          font: Math.random() < 0.5 ? a.font : b.font,
+          x: (a.px+b.px)/2 + rnd(-18, 18),
+          y: (a.py+b.py)/2 + rnd(-18, 18),
+          gen: ng, hybrid: true,
+          pr: a.cr, pg: a.cg, pb: a.cb,
+          sz: rnd(28, 44),
+        });
+        creatures.push(child);
+        births++;
+        logEvent(a.char + ' × ' + b.char + ' → ' + nc + '　G' + ng, '#e85d8a');
+        spawnPop(child.px, child.py, nc, child.cr, child.cg, child.cb);
+      }
+      a.maxAge = a.age + 100;
+      b.maxAge = b.age + 100;
+    }, 1000);
+  }
+
+  // --- Drama ---
+  function showDrama(text, color, delay, next) {
+    var el = document.getElementById('drama');
+    var tx = document.getElementById('dtext');
+    tx.style.color = color;
+    tx.textContent = text;
+    el.classList.add('on');
+    clearTimeout(dramaTimer);
+    if (next) {
+      dramaTimer = setTimeout(function() {
+        tx.textContent = next;
+        setTimeout(function() { el.classList.remove('on'); }, 700);
+      }, delay);
+    } else {
+      dramaTimer = setTimeout(function() { el.classList.remove('on'); }, delay);
     }
   }
 
-  // 自動パートナー形成
-  if(fr%12===0){
-    for(const a of creatures){
-      if(a.partner||a.married||a.mcool>0) continue;
-      for(const b of creatures){
-        if(b===a||b.partner||b.married||b.mcool>0) continue;
-        if(!(ATT[a.gi]||[]).includes(b.gi)) continue;
-        if(Math.hypot(a.x-b.x,a.y-b.y)<95){a.partner=b;b.partner=a;break;}
+  // --- Birth Popup ---
+  function spawnPop(x, y, char, r, g, b) {
+    var d = document.createElement('div');
+    d.className = 'bpop';
+    d.textContent = '✨' + char;
+    d.style.left  = (x - 16) + 'px';
+    d.style.top   = (y - 30) + 'px';
+    d.style.color = 'rgb('+r+','+g+','+b+')';
+    document.body.appendChild(d);
+    setTimeout(function() { d.remove(); }, 1800);
+  }
+
+  // --- Log ---
+  function logEvent(msg, color) {
+    color = color || 'rgba(0,0,0,0.6)';
+    evLog.unshift({ msg: msg, color: color });
+    if (evLog.length > 7) evLog.pop();
+    var el = document.getElementById('elog');
+    el.innerHTML = '';
+    for (var i = 0; i < Math.min(5, evLog.length); i++) {
+      var e = evLog[i];
+      var d = document.createElement('div');
+      d.className = 'eitem';
+      d.style.borderColor = e.color;
+      d.style.opacity = (1 - i * 0.16).toString();
+      d.textContent = e.msg;
+      el.appendChild(d);
+    }
+  }
+
+  // --- Ripple ---
+  function addRipple(x, y, r, g, b) {
+    ripples.push({ x:x, y:y, rad:0, a:0.7, r:r, g:g, b:b });
+  }
+
+  // --- Marriage Particles (ほんわか版) ---
+  function spawnMarriageParticles(x, y, r1, g1, b1, r2, g2, b2) {
+    // ふわふわ浮かぶ淡い粒
+    var count = 28;
+    for (var i = 0; i < count; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 0.2 + Math.random() * 0.9;
+      var life  = 90 + Math.random() * 120;
+      var size  = 4 + Math.random() * 10;
+      // 両親の色を淡くパステル化
+      var t  = Math.random();
+      var br = t < 0.5 ? r1 : r2;
+      var bg = t < 0.5 ? g1 : g2;
+      var bb2= t < 0.5 ? b1 : b2;
+      // 白に近づけてパステルに
+      br = Math.round(br * 0.45 + 255 * 0.55);
+      bg = Math.round(bg * 0.45 + 255 * 0.55);
+      bb2= Math.round(bb2* 0.45 + 255 * 0.55);
+      particles.push({
+        x: x + (Math.random()-0.5)*30,
+        y: y + (Math.random()-0.5)*30,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 0.3 - Math.random() * 0.5,
+        life: life, maxLife: life,
+        size: size,
+        r: br, g: bg, b: bb2,
+        wobble: Math.random() * Math.PI * 2,
+        wobSpd: 0.04 + Math.random() * 0.04,
+        drift: (Math.random()-0.5) * 0.015,
+      });
+    }
+    // やわらかいリング1発だけ
+    addRipple(x, y, (r1+r2)>>1, (g1+g2)>>1, (b1+b2)>>1);
+  }
+
+  function drawParticles() {
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.wobble += p.wobSpd;
+      p.vx += p.drift + Math.sin(p.wobble) * 0.012;
+      p.vy -= 0.012; // ふわっと上昇
+      p.vx *= 0.992;
+      p.vy *= 0.992;
+      p.x  += p.vx;
+      p.y  += p.vy;
+      p.life--;
+
+      if (p.life <= 0) { particles.splice(i, 1); continue; }
+
+      var progress = p.life / p.maxLife; // 1→0
+      // 最初にふわっと現れ、最後にふわっと消える
+      var alpha = progress < 0.15
+        ? (progress / 0.15) * 0.55
+        : progress * 0.55;
+      var sz = p.size * (0.6 + (1-progress) * 0.5);
+
+      // ぼやけた円（グラデーション）
+      var grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, sz);
+      grd.addColorStop(0,   'rgba('+p.r+','+p.g+','+p.b+','+alpha+')');
+      grd.addColorStop(0.5, 'rgba('+p.r+','+p.g+','+p.b+','+(alpha*0.5)+')');
+      grd.addColorStop(1,   'rgba('+p.r+','+p.g+','+p.b+',0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, sz, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawRipples() {
+    for (var i = ripples.length - 1; i >= 0; i--) {
+      var rp = ripples[i];
+      ctx.beginPath();
+      ctx.arc(rp.x, rp.y, rp.rad, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba('+rp.r+','+rp.g+','+rp.b+','+rp.a+')';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      rp.rad += 3; rp.a *= 0.964;
+      if (rp.a < 0.02) ripples.splice(i, 1);
+    }
+  }
+
+  // --- Click ---
+  canvas.addEventListener('click', function(e) {
+    var mx = e.clientX, my = e.clientY;
+    var R  = 120;
+    var nearby = [];
+    for (var i = 0; i < creatures.length; i++) {
+      var c = creatures[i];
+      if (c.married) continue;
+      var d = Math.sqrt((c.px-mx)*(c.px-mx)+(c.py-my)*(c.py-my));
+      if (d < R) nearby.push(c);
+    }
+
+    if (godMode === 'en') {
+      if (nearby.length >= 2) {
+        var a = nearby[0], b = nearby[1];
+        a.pullX = b.px; a.pullY = b.py; a.pullStr = 0.22;
+        b.pullX = a.px; b.pullY = a.py; b.pullStr = 0.22;
+        if (!a.partner && !b.partner) { a.partner = b; b.partner = a; }
+        logEvent('神が ' + a.char + ' と ' + b.char + ' の縁を結んだ', '#e85d8a');
+        addRipple(mx, my, 255, 180, 60);
+      } else if (nearby.length === 1) {
+        nearby[0].pullX = mx; nearby[0].pullY = my; nearby[0].pullStr = 0.14;
+        addRipple(mx, my, 255, 180, 60);
+      } else {
+        if (creatures.length < MAX_POP) {
+          var nc = new Creature({ x: mx + rnd(-20,20), y: my + rnd(-20,20) });
+          creatures.push(nc);
+          logEvent('神が「' + nc.char + '」を召喚した', '#22c55e');
+          addRipple(mx, my, 100, 240, 100);
+        }
+      }
+    } else if (godMode === 'cut') {
+      cuts++;
+      var names = [];
+      for (var i = 0; i < nearby.length; i++) {
+        var c = nearby[i];
+        if (c.partner) { c.partner.partner = null; c.partner.mCool = 300; c.partner.repelCoolWhisper = 90; c.partner.whisperCool = 5; }
+        c.partner = null; c.mCool = 300; c.repelCoolWhisper = 90; c.whisperCool = 5;
+        var ddx = c.px - mx, ddy = c.py - my;
+        var dd  = Math.sqrt(ddx*ddx + ddy*ddy) || 1;
+        c.pvx += (ddx/dd) * 1.8 + rnd(-0.5, 0.5);
+        c.pvy += (ddy/dd) * 1.8 + rnd(-0.5, 0.5);
+        names.push(c.char);
+      }
+      if (names.length > 0) {
+        logEvent('神が縁を断ち切った（' + names.join('・') + '）', '#6040ff');
+        showDrama('縁切', 'rgba(80,60,255,0.85)', 700);
+      }
+      addRipple(mx, my, 100, 80, 255);
+    }
+  });
+
+  // --- Space ---
+  document.addEventListener('keydown', function(e) {
+    if (e.code === 'Space' && !e.repeat && creatures.length < MAX_POP) {
+      var nc = new Creature({ x: mouseX + rnd(-20,20), y: mouseY + rnd(-20,20) });
+      creatures.push(nc);
+      logEvent('「' + nc.char + '」が現れた', '#22c55e');
+      e.preventDefault();
+    }
+  });
+
+  // --- HUD ---
+  function updateHUD() {
+    var alive = [];
+    for (var i = 0; i < creatures.length; i++) {
+      if (!creatures[i].married) alive.push(creatures[i]);
+    }
+    var loving = 0;
+    for (var i = 0; i < alive.length; i++) { if (alive[i].partner) loving++; }
+    var uniqMap = {};
+    for (var i = 0; i < alive.length; i++) uniqMap[alive[i].char] = 1;
+    var divCount = Object.keys(uniqMap).length;
+    var popLen = alive.length;
+
+    function pct(v, mx) { return Math.min(100, (v/mx)*100) + '%'; }
+    document.getElementById('fl-en').style.width   = pct(marriages, 30);
+    document.getElementById('vl-en').textContent   = marriages;
+    document.getElementById('fl-cut').style.width  = pct(cuts, 20);
+    document.getElementById('vl-cut').textContent  = cuts;
+    document.getElementById('fl-pop').style.width  = pct(popLen, MAX_POP);
+    document.getElementById('vl-pop').textContent  = popLen;
+    document.getElementById('fl-love').style.width = pct(loving, popLen || 1);
+    document.getElementById('vl-love').textContent = loving;
+    document.getElementById('fl-div').style.width  = pct(divCount, 36);
+    document.getElementById('vl-div').textContent  = divCount;
+    document.getElementById('bn-mar').textContent   = marriages;
+    document.getElementById('bn-gen').textContent   = maxGen;
+    document.getElementById('bn-birth').textContent = births;
+  }
+
+  // --- Maintain ---
+  function maintain() {
+    var aliveCount = 0;
+    for (var i = 0; i < creatures.length; i++) { if (!creatures[i].married) aliveCount++; }
+    if (aliveCount < 18 && creatures.length < MAX_POP) {
+      var n = Math.min(4, MAX_POP - creatures.length);
+      for (var i = 0; i < n; i++) {
+        (function(delay) {
+          setTimeout(function() { creatures.push(new Creature()); }, delay);
+        })(i * 220);
       }
     }
   }
 
-  for(const c of creatures) c.update(fr);
-  creatures.sort((a,b)=>a.gen-b.gen);
-  for(const c of creatures) c.draw();
-
-  if(fr%10===0){
-    for(const a of creatures){
-      if(a.partner&&!a.married) tryMarry(a,a.partner,fr);
+  // --- Draw Background ---
+  function drawBG() {
+    ctx.fillStyle = '#f0efec';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(0,0,0,0.022)';
+    for (var x = 0; x < W; x += 42) {
+      for (var y = 0; y < H; y += 42) {
+        ctx.fillRect(x, y, 1, 1);
+      }
     }
   }
 
-  creatures=creatures.filter(c=>!c.dead());
-  if(fr%22===0){updateHUD();maintain();}
-  requestAnimationFrame(loop);
-}
+  // --- Initial Spawn（フォント読み込み後に開始）---
+  function startSpawn() {
+    for (var si = 0; si < 40; si++) {
+      (function(i) {
+        setTimeout(function() { creatures.push(new Creature()); }, i * 85);
+      })(si);
+    }
+  }
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function() { startSpawn(); });
+  } else {
+    setTimeout(startSpawn, 1000);
+  }
 
-loop();
+  // --- Loop ---
+  function loop() {
+    frame++;
 
-// ---- 初期ログ ----
-setTimeout(()=>logEv('神よ、文字の運命を操れ'),500);
-setTimeout(()=>logEv('💛 縁結びモードでクリックしてみよ','#e8507a'),1400);
+    drawBG();
+    drawRipples();
+    drawParticles();
+
+    // パートナー解除
+    for (var i = 0; i < creatures.length; i++) {
+      var c = creatures[i];
+      if (c.partner && !c.partner.married) {
+        var ddx = c.px - c.partner.px, ddy = c.py - c.partner.py;
+        if (Math.sqrt(ddx*ddx+ddy*ddy) > 340) {
+          c.partner.partner = null;
+          c.partner = null;
+          c.mCool = 120;
+        }
+      }
+    }
+
+    // 自動パートナー形成
+    if (frame % 10 === 0) {
+      for (var i = 0; i < creatures.length; i++) {
+        var a = creatures[i];
+        if (a.partner || a.married || a.mCool > 0) continue;
+        for (var j = 0; j < creatures.length; j++) {
+          var b = creatures[j];
+          if (b === a || b.partner || b.married || b.mCool > 0) continue;
+          var attList = ATTRACT[a.gi] || [];
+          if (attList.indexOf(b.gi) < 0) continue;
+          var ddx = a.px-b.px, ddy = a.py-b.py;
+          if (Math.sqrt(ddx*ddx+ddy*ddy) < 100) {
+            a.partner = b; b.partner = a; break;
+          }
+        }
+      }
+    }
+
+    // 更新
+    for (var i = 0; i < creatures.length; i++) creatures[i].update();
+
+    // 描画
+    creatures.sort(function(a,b) { return a.gen - b.gen; });
+    for (var i = 0; i < creatures.length; i++) creatures[i].draw();
+
+    // 婚姻
+    if (frame % 12 === 0) {
+      for (var i = 0; i < creatures.length; i++) {
+        var a = creatures[i];
+        if (a.partner && !a.married) tryMarry(a, a.partner);
+      }
+    }
+
+    // 死亡削除
+    var next = [];
+    for (var i = 0; i < creatures.length; i++) {
+      if (!creatures[i].isDead()) next.push(creatures[i]);
+    }
+    creatures = next;
+
+    if (frame % 20 === 0) { updateHUD(); maintain(); }
+
+    requestAnimationFrame(loop);
+  }
+
+  loop();
+
+  // 初期ログ
+  setTimeout(function() { logEvent('神よ、文字の運命を操れ', 'rgba(0,0,0,0.45)'); }, 500);
+  setTimeout(function() { logEvent('💛 縁結びモードでクリック', '#e85d8a'); }, 1400);
+  setTimeout(function() { logEvent('✂️ 引き離しモードでクリック', '#6040ff'); }, 2500);
+
+  // ============================================================
+  // AUDIO ENGINE — Web Audio API
+  // ============================================================
+  var audioCtx = null;
+  var audioOn  = false;
+  var masterGain = null;
+  var scheduledNodes = [];
+
+  // 音階：日本の五音音階（ヨナ抜き長音階）D, E, F#, A, B
+  var SCALE_HZ = [
+    293.66, 329.63, 369.99, 440.00, 493.88,  // D4 E4 F#4 A4 B4
+    587.33, 659.25, 739.99, 880.00, 987.77,  // D5 E5 F#5 A5 B5
+    146.83, 164.81, 184.99, 220.00, 246.94,  // D3 E3 F#3 A3 B3
+  ];
+
+  function initAudio() {
+    audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+    masterGain.gain.linearRampToValueAtTime(0.55, audioCtx.currentTime + 2);
+    masterGain.connect(audioCtx.destination);
+
+    startAmbient();
+    startMelody();
+    startPad();
+  }
+
+  // ---- 環境音：水のゆらぎ（ホワイトノイズ＋フィルター） ----
+  function startAmbient() {
+    var bufSize = audioCtx.sampleRate * 4;
+    var buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1);
+
+    var src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+
+    var filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 600;
+    filter.Q.value = 0.3;
+
+    // LFOでゆらぎ
+    var lfo = audioCtx.createOscillator();
+    var lfoGain = audioCtx.createGain();
+    lfo.frequency.value = 0.08;
+    lfoGain.gain.value = 200;
+    lfo.connect(lfoGain);
+    lfo.start();
+    lfoGain.connect(filter.frequency);
+
+    var ambGain = audioCtx.createGain();
+    ambGain.gain.value = 0.018;
+
+    src.connect(filter);
+    filter.connect(ambGain);
+    ambGain.connect(masterGain);
+    src.start();
+    scheduledNodes.push(src, lfo);
+  }
+
+  // ---- 琴風メロディ：ランダムに音階の音をはじく ----
+  function pluckNote(freq, time, dur, vol) {
+    vol = vol || 0.18;
+    // Karplus-Strong 風：短いノイズ → ローパス → ゲイン
+    var osc = audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+
+    // 倍音を足す（三角波的に）
+    var osc2 = audioCtx.createOscillator();
+    osc2.type = 'triangle';
+    osc2.frequency.value = freq * 2.01;
+
+    var env = audioCtx.createGain();
+    env.gain.setValueAtTime(0, time);
+    env.gain.linearRampToValueAtTime(vol, time + 0.008);
+    env.gain.exponentialRampToValueAtTime(0.001, time + dur);
+
+    var env2 = audioCtx.createGain();
+    env2.gain.setValueAtTime(0, time);
+    env2.gain.linearRampToValueAtTime(vol * 0.3, time + 0.008);
+    env2.gain.exponentialRampToValueAtTime(0.001, time + dur * 0.6);
+
+    osc.connect(env);   env.connect(masterGain);
+    osc2.connect(env2); env2.connect(masterGain);
+    osc.start(time);  osc.stop(time + dur + 0.1);
+    osc2.start(time); osc2.stop(time + dur + 0.1);
+  }
+
+  var melodyTimer = null;
+  function startMelody() {
+    function scheduleNext() {
+      if (!audioOn) return;
+      var now  = audioCtx.currentTime;
+      // ランダムに2〜4音を少し間を置いて鳴らす
+      var notes = 1 + Math.floor(Math.random() * 3);
+      var baseT = now + 0.05;
+      for (var i = 0; i < notes; i++) {
+        var freq = SCALE_HZ[Math.floor(Math.random() * SCALE_HZ.length)];
+        var t    = baseT + i * (0.12 + Math.random() * 0.2);
+        var dur  = 1.2 + Math.random() * 2.0;
+        var vol  = 0.10 + Math.random() * 0.12;
+        pluckNote(freq, t, dur, vol);
+      }
+      // 次の音までの間隔：0.8〜3.5秒
+      var interval = 800 + Math.random() * 2700;
+      melodyTimer = setTimeout(scheduleNext, interval);
+    }
+    scheduleNext();
+  }
+
+  // ---- パッド：低音ドローン（息の長い和音） ----
+  function startPad() {
+    var padFreqs = [146.83, 220.00, 293.66]; // D3, A3, D4
+    padFreqs.forEach(function(freq) {
+      var osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+
+      // ビブラートLFO
+      var vib = audioCtx.createOscillator();
+      var vibG = audioCtx.createGain();
+      vib.frequency.value = 0.3 + Math.random() * 0.2;
+      vibG.gain.value = freq * 0.003;
+      vib.connect(vibG); vibG.connect(osc.frequency);
+      vib.start();
+
+      var padGain = audioCtx.createGain();
+      padGain.gain.value = 0.022;
+
+      // ゆっくりとしたフェードイン
+      padGain.gain.setValueAtTime(0, audioCtx.currentTime);
+      padGain.gain.linearRampToValueAtTime(0.022, audioCtx.currentTime + 5);
+
+      osc.connect(padGain);
+      padGain.connect(masterGain);
+      osc.start();
+      scheduledNodes.push(osc, vib);
+    });
+  }
+
+  // ---- 婚姻時の特別な音 ----
+  window.playMarriageChime = function(r1, g1, b1) {
+    if (!audioOn || !audioCtx) return;
+    // 結婚の瞬間：明るいアルペジオ
+    var chord = [
+      SCALE_HZ[0], SCALE_HZ[2], SCALE_HZ[3], SCALE_HZ[5], SCALE_HZ[7]
+    ];
+    var now = audioCtx.currentTime;
+    chord.forEach(function(freq, i) {
+      pluckNote(freq * 2, now + i * 0.1, 2.5, 0.14);
+    });
+    // 高音きらきら
+    pluckNote(SCALE_HZ[9], now + 0.55, 1.8, 0.10);
+    pluckNote(SCALE_HZ[7], now + 0.75, 1.5, 0.08);
+  };
+
+  // ---- ON/OFF ----
+  window.toggleAudio = function() {
+    var btn = document.getElementById('audio-btn');
+    if (!audioCtx) {
+      initAudio();
+      audioOn = true;
+      btn.textContent = '🔔';
+      return;
+    }
+    audioOn = !audioOn;
+    if (audioOn) {
+      audioCtx.resume();
+      masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+      masterGain.gain.linearRampToValueAtTime(0.55, audioCtx.currentTime + 1.0);
+      startMelody();
+      btn.textContent = '🔔';
+    } else {
+      clearTimeout(melodyTimer);
+      masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+      masterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.0);
+      btn.textContent = '🔇';
+    }
+  };
+
+
+})();
 </script>
 </body>
 </html>
