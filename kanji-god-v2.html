@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>文字の神</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#efefec; overflow:hidden; width:100vw; height:100vh; }
+canvas { display:block; }
+
+#ui {
+  position:fixed; inset:0;
+  pointer-events:none;
+  z-index:10;
+}
+
+/* モードボタン */
+#mode-bar {
+  position:absolute;
+  top:16px; left:50%;
+  transform:translateX(-50%);
+  display:flex; gap:0;
+  background:rgba(255,255,255,0.82);
+  border-radius:999px;
+  padding:5px;
+  box-shadow:0 2px 16px rgba(0,0,0,0.10);
+  pointer-events:all;
+}
+.mbtn {
+  font-size:13px; font-weight:700;
+  padding:7px 20px;
+  border:none; border-radius:999px;
+  background:transparent;
+  color:rgba(0,0,0,0.38);
+  cursor:pointer;
+  transition:all .2s;
+  letter-spacing:.05em;
+  font-family:sans-serif;
+}
+.mbtn.on { color:#fff; }
+#men.on  { background:linear-gradient(120deg,#e8507a,#f5a623); }
+#mze.on  { background:linear-gradient(120deg,#5040e8,#a020cc); }
+#mwa.on  { background:rgba(0,0,0,0.12); color:rgba(0,0,0,.55); }
+
+/* バロメータ */
+#baro {
+  position:absolute;
+  top:16px; left:16px;
+  width:182px;
+  background:rgba(255,255,255,0.82);
+  border-radius:14px;
+  padding:14px 14px 12px;
+  box-shadow:0 2px 16px rgba(0,0,0,0.08);
+}
+.bt { font-size:9px; letter-spacing:.45em; color:rgba(0,0,0,.22); margin-bottom:10px; font-family:sans-serif; }
+.br { display:flex; align-items:center; gap:6px; margin-bottom:7px; }
+.bl { font-size:10px; color:rgba(0,0,0,.38); width:56px; flex-shrink:0; font-family:sans-serif; }
+.btr { flex:1; height:5px; background:rgba(0,0,0,.07); border-radius:3px; overflow:hidden; }
+.bf  { height:100%; border-radius:3px; transition:width .5s; width:0; }
+.bv  { font-size:10px; color:rgba(0,0,0,.35); width:22px; text-align:right; font-family:monospace; }
+.bdiv { border:none; border-top:1px solid rgba(0,0,0,.06); margin:8px 0; }
+.bbig { display:flex; justify-content:space-between; }
+.bbn { font-size:22px; font-weight:900; line-height:1; font-family:sans-serif; color:rgba(0,0,0,.7); }
+.bbl { font-size:9px; color:rgba(0,0,0,.22); letter-spacing:.2em; font-family:sans-serif; }
+
+/* イベントログ */
+#elog {
+  position:absolute;
+  top:16px; right:16px;
+  width:210px;
+  display:flex; flex-direction:column; gap:4px;
+}
+.eitem {
+  font-size:11px; line-height:1.5;
+  padding:5px 12px;
+  background:rgba(255,255,255,0.82);
+  border-radius:999px;
+  border-left:3px solid #e8507a;
+  box-shadow:0 1px 8px rgba(0,0,0,0.06);
+  color:rgba(0,0,0,.6);
+  font-family:sans-serif;
+  animation:ein .3s ease forwards;
+  opacity:0;
+}
+@keyframes ein { from{opacity:0;transform:translateX(12px)} to{opacity:1;transform:none} }
+
+/* ドラマ */
+#drama {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:opacity .35s;
+  pointer-events:none;
+}
+#drama.on { opacity:1; }
+#dtext {
+  font-size:clamp(2.5rem,9vw,5.5rem);
+  font-weight:900;
+  font-family:sans-serif;
+  letter-spacing:.35em;
+  color:#1a1a1a;
+  text-align:center;
+}
+
+/* ヒント */
+#hint {
+  position:absolute;
+  bottom:20px; left:50%;
+  transform:translateX(-50%);
+  font-size:10px; letter-spacing:.35em;
+  color:rgba(0,0,0,.2);
+  white-space:nowrap;
+  font-family:sans-serif;
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="ui">
+  <div id="mode-bar">
+    <button class="mbtn on" id="men"  onclick="setMode('en')">💛 縁結び</button>
+    <button class="mbtn"    id="mze"  onclick="setMode('ze')">✂️ 引き離し</button>
+    <button class="mbtn"    id="mwa"  onclick="setMode('wa')">👁 観察</button>
+  </div>
+
+  <div id="baro">
+    <div class="bt">WORLD STATE</div>
+    <div class="br"><div class="bl">💛 縁結び</div><div class="btr"><div class="bf" id="f-en" style="background:linear-gradient(90deg,#e8507a,#f5a623)"></div></div><div class="bv" id="v-en">0</div></div>
+    <div class="br"><div class="bl">✂️ 引き離し</div><div class="btr"><div class="bf" id="f-ze" style="background:linear-gradient(90deg,#5040e8,#a020cc)"></div></div><div class="bv" id="v-ze">0</div></div>
+    <div class="br"><div class="bl">🐟 個体数</div><div class="btr"><div class="bf" id="f-po" style="background:linear-gradient(90deg,#22c55e,#86efac)"></div></div><div class="bv" id="v-po">0</div></div>
+    <div class="br"><div class="bl">💞 恋愛中</div><div class="btr"><div class="bf" id="f-lo" style="background:linear-gradient(90deg,#f59e0b,#fde68a)"></div></div><div class="bv" id="v-lo">0</div></div>
+    <div class="br"><div class="bl">🌀 多様性</div><div class="btr"><div class="bf" id="f-di" style="background:linear-gradient(90deg,#06b6d4,#a5f3fc)"></div></div><div class="bv" id="v-di">0</div></div>
+    <hr class="bdiv">
+    <div class="bbig">
+      <div><div class="bbn" id="n-ma">0</div><div class="bbl">婚姻</div></div>
+      <div><div class="bbn" id="n-ge">1</div><div class="bbl">世代</div></div>
+      <div><div class="bbn" id="n-bi">0</div><div class="bbl">誕生</div></div>
+    </div>
+  </div>
+
+  <div id="elog"></div>
+  <div id="drama"><div id="dtext"></div></div>
+  <div id="hint">縁結びモードでクリック → 出逢いを作る　／　✂️モードでクリック → 縁を断ち切る　／　SPACEで召喚</div>
+</div>
+
+<script>
+// ---- キャンバス ----
+const cv  = document.getElementById('c');
+const ctx = cv.getContext('2d');
+function resize() { cv.width = innerWidth; cv.height = innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+// ---- 設定 ----
+const MAX = 80;
+let godMode = 'en';
+let marriages = 0, births = 0, maxGen = 1, separations = 0;
+
+// ---- カラーグループ（任天堂カラー） ----
+const GRP = [
+  { chars:['愛','恋','情','慕','絆','縁'], r:232,g:60,b:100,  gr:255,gg:140,gb:180 },
+  { chars:['光','明','輝','晴','朗','暉'], r:240,g:185,b:0,   gr:255,gg:225,gb:80  },
+  { chars:['生','活','育','栄','盛','萌'], r:30, g:180,b:50,   gr:100,gg:240,gb:120 },
+  { chars:['水','流','海','泳','波','潮'], r:20, g:130,b:255,  gr:90, gg:200,gb:255 },
+  { chars:['火','炎','燃','焦','灼','熱'], r:255,g:85, b:10,   gr:255,gg:160,gb:70  },
+  { chars:['影','暗','霧','昏','玄','蔽'], r:130,g:50, b:230,  gr:180,gg:110,gb:255 },
+  { chars:['風','気','雲','霞','漂','爽'], r:0,  g:195,b:195,  gr:80, gg:240,gb:240 },
+  { chars:['土','山','岩','地','根','礎'], r:170,g:105,b:35,   gr:220,gg:158,gb:75  },
+];
+
+// フォント（システムフォントのみ）
+const FONTS = [
+  '900 {sz}px "HiraKakuProN-W6","ヒラギノ角ゴ ProN W6",sans-serif',
+  '{sz}px "HiraMinProN-W6","ヒラギノ明朝 ProN W6",serif',
+  '700 {sz}px "YuGothic","游ゴシック",sans-serif',
+  '{sz}px "YuMincho","游明朝",serif',
+  '900 {sz}px "NotoSansJP-Black","Noto Sans JP",sans-serif',
+  '700 {sz}px sans-serif',
+  '{sz}px serif',
+];
+
+function getFont(fi, sz) {
+  return FONTS[fi].replace(/\{sz\}/g, sz);
+}
+
+// 引力マップ
+const ATT = {0:[1,2,3],1:[0,2,6],2:[0,3,7],3:[2,4,6],4:[1,5,7],5:[4,6,3],6:[1,3,7],7:[2,4,5]};
+const REP = {0:[5],1:[5],2:[4],3:[7],4:[2],5:[0],6:[5],7:[3]};
+
+// 合成表
+const MERGE = {
+  '愛恋':'艶','愛情':'慈','愛光':'煌','恋光':'炫','光明':'輝',
+  '生水':'泳','生活':'命','水流':'漣','火炎':'焔','影水':'淵',
+  '愛生':'慈','光水':'瀬','風水':'涼','火水':'湯','土水':'潤',
+  '愛風':'馨','生風':'薫','光土':'陽','影火':'燃','土山':'峰',
+  '光火':'爍','影光':'曖','恋生':'春','水影':'深','火土':'溶',
+};
+
+// ---- クリーチャー ----
+let creatures = [];
+
+class K {
+  constructor(o={}) {
+    this.gi  = o.gi  ?? (Math.floor(Math.random() * GRP.length));
+    this.g   = GRP[this.gi];
+    this.ch  = o.ch  ?? this.g.chars[Math.floor(Math.random() * this.g.chars.length)];
+    this.fi  = o.fi  ?? Math.floor(Math.random() * FONTS.length);
+    this.gen = o.gen ?? 1;
+    this.hyb = o.hyb ?? false;
+    this.x   = o.x  ?? (60 + Math.random() * (innerWidth  - 120));
+    this.y   = o.y  ?? (60 + Math.random() * (innerHeight - 120));
+    this.vx  = (Math.random() - .5) * 1.5;
+    this.vy  = (Math.random() - .5) * 1.5;
+    this.spd = .45 + Math.random() * .7;
+    this.sz  = o.sz ?? (24 + Math.random() * 20);
+
+    if (o.hyb && o.c1 && o.c2) {
+      this.r = (o.c1[0]+o.c2[0])>>1;
+      this.g2= (o.c1[1]+o.c2[1])>>1;
+      this.b = (o.c1[2]+o.c2[2])>>1;
+    } else {
+      this.r = this.g.r; this.g2 = this.g.g; this.b = this.g.b;
+    }
+
+    this.al  = 0;
+    this.tal = .78 + Math.random() * .18;
+    this.age = 0;
+    this.max = 1600 + Math.random() * 2000;
+    this.wa  = .25 + Math.random() * .55;
+    this.wf  = .016 + Math.random() * .024;
+    this.wo  = Math.random() * Math.PI * 2;
+    this.gph = Math.random() * Math.PI * 2;
+    this.wob = Math.random() * Math.PI * 2;
+    this.wos = .015 + Math.random() * .025;
+    this.trail = [];
+    this.partner = null;
+    this.married = false;
+    this.mcool  = 180 + Math.floor(Math.random() * 120);
+    this.pull   = { x:0, y:0, s:0 };
+  }
+
+  update(fr) {
+    this.age++;
+    this.gph += .055;
+    this.wob += this.wos;
+    this.mcool = Math.max(0, this.mcool - 1);
+
+    if      (this.age < 80)              this.al = (this.age/80) * this.tal;
+    else if (this.age > this.max - 80)   this.al = Math.max(0, (this.max-this.age)/80 * this.tal);
+    else                                 this.al = this.tal;
+
+    let ax=0, ay=0;
+    const W = cv.width, H = cv.height;
+
+    for (const o of creatures) {
+      if (o === this || o.married) continue;
+      const dx = o.x-this.x, dy = o.y-this.y;
+      const d = Math.hypot(dx,dy) || 1;
+      if (d > 380) continue;
+      const nd=dx/d, ne=dy/d;
+      const att = (ATT[this.gi]||[]).includes(o.gi);
+      const rep = (REP[this.gi]||[]).includes(o.gi);
+      if      (att && d<240) { const f=(d<40?-.01:.016)*(1-d/240); ax+=nd*f; ay+=ne*f; }
+      else if (rep && d<180) { const f=-.02*(1-d/180); ax+=nd*f; ay+=ne*f; }
+      else if (o.gi===this.gi && d<70) { ax-=nd*.01; ay-=ne*.01; }
+    }
+
+    if (this.pull.s > .005) {
+      const dx=this.pull.x-this.x, dy=this.pull.y-this.y, d=Math.hypot(dx,dy)||1;
+      ax += dx/d * this.pull.s;
+      ay += dy/d * this.pull.s;
+      this.pull.s *= .92;
+    }
+
+    const sp=Math.hypot(this.vx,this.vy)||1;
+    const px=-this.vy/sp, py=this.vx/sp;
+    const w=Math.sin(fr*this.wf+this.wo)*this.wa;
+    this.vx += ax + px*w*.05 + Math.sin(this.wob)*.003;
+    this.vy += ay + py*w*.05 + Math.cos(this.wob*.7)*.003;
+
+    const s=Math.hypot(this.vx,this.vy)||1;
+    if (s > this.spd) { this.vx=this.vx/s*this.spd; this.vy=this.vy/s*this.spd; }
+
+    this.x += this.vx; this.y += this.vy;
+    const m=65;
+    if(this.x<m)this.vx+=.07; if(this.x>W-m)this.vx-=.07;
+    if(this.y<m)this.vy+=.07; if(this.y>H-m)this.vy-=.07;
+
+    this.trail.unshift({x:this.x,y:this.y});
+    if (this.trail.length > 12) this.trail.pop();
+  }
+
+  draw() {
+    if (this.al <= 0) return;
+    const glow = .45 + .55*Math.sin(this.gph);
+    const rr = Math.min(255, this.r + (this.g.gr - this.r)*.5*glow) | 0;
+    const gg = Math.min(255, this.g2+ (this.g.gg - this.g2)*.5*glow) | 0;
+    const bb = Math.min(255, this.b + (this.g.gb - this.b)*.5*glow) | 0;
+
+    // 尾
+    for (let i=1; i<this.trail.length; i++) {
+      const t=this.trail[i], p=this.trail[i-1];
+      const a = (1-i/this.trail.length)*this.al*.15;
+      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(t.x,t.y);
+      ctx.strokeStyle = `rgba(${rr},${gg},${bb},${a})`;
+      ctx.lineWidth = (this.trail.length-i)/this.trail.length*4;
+      ctx.stroke();
+    }
+
+    // グロー
+    const gr = ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.sz*2.2);
+    gr.addColorStop(0, `rgba(${rr},${gg},${bb},${this.al*.16*glow})`);
+    gr.addColorStop(1, `rgba(${rr},${gg},${bb},0)`);
+    ctx.fillStyle = gr;
+    ctx.beginPath(); ctx.arc(this.x,this.y,this.sz*2.2,0,Math.PI*2); ctx.fill();
+
+    // 文字
+    ctx.save();
+    ctx.globalAlpha = this.al;
+    ctx.font = getFont(this.fi, this.sz);
+    ctx.fillStyle = `rgb(${rr},${gg},${bb})`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const ang = Math.atan2(this.vy,this.vx) * .1;
+    ctx.translate(this.x, this.y); ctx.rotate(ang);
+    if (this.hyb) { ctx.shadowColor=`rgba(${rr},${gg},${bb},.9)`; ctx.shadowBlur=16; }
+    ctx.fillText(this.ch, 0, 0);
+    ctx.restore();
+
+    // 縁の糸
+    if (this.partner && this.partner.al>0 && !this.married) {
+      const dx=this.partner.x-this.x, dy=this.partner.y-this.y, d=Math.hypot(dx,dy);
+      if (d<260) {
+        const a=(1-d/260)*.45*this.al;
+        ctx.beginPath(); ctx.moveTo(this.x,this.y);
+        ctx.quadraticCurveTo(
+          (this.x+this.partner.x)/2+dy*.2,
+          (this.y+this.partner.y)/2-dx*.2,
+          this.partner.x, this.partner.y
+        );
+        ctx.strokeStyle = `rgba(230,150,50,${a})`;
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([4,8]); ctx.stroke(); ctx.setLineDash([]);
+      }
+    }
+
+    // 世代バッジ
+    if (this.gen > 1) {
+      ctx.save();
+      ctx.globalAlpha = this.al * .45;
+      ctx.font = `bold 8px sans-serif`;
+      ctx.fillStyle = `rgb(${rr},${gg},${bb})`;
+      ctx.textAlign = 'center';
+      ctx.fillText('G'+this.gen, this.x, this.y+this.sz*.72);
+      ctx.restore();
+    }
+
+    // 引力リング
+    if (this.pull.s > .04) {
+      ctx.save();
+      ctx.globalAlpha = this.al * Math.min(1, this.pull.s*4) * .55;
+      ctx.strokeStyle = godMode==='en' ? 'rgba(255,190,50,1)' : 'rgba(100,70,255,1)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.sz*.62,0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  dead() { return this.age >= this.max; }
+}
+
+// ---- 婚姻 ----
+let lastMar = 0;
+
+function tryMarry(a, b, fr) {
+  if (fr - lastMar < 40) return;
+  if (a.married||b.married||a.mcool>0||b.mcool>0) return;
+  if (Math.hypot(a.x-b.x,a.y-b.y) > 28) return;
+  if (a.age < 120 || b.age < 120) return;
+
+  a.married = b.married = true;
+  a.partner = b.partner = null;
+  marriages++; lastMar = fr;
+
+  const nc = mergeChar(a.ch, b.ch);
+  const ng = Math.max(a.gen,b.gen)+1;
+  if (ng > maxGen) maxGen = ng;
+
+  showDrama(`${a.ch} ∞ ${b.ch}`, 800, nc);
+
+  setTimeout(() => {
+    if (creatures.length < MAX) {
+      const gi = Math.random()<.5 ? a.gi : b.gi;
+      const c = new K({
+        ch:nc, gi,
+        fi: Math.random()<.5 ? a.fi : b.fi,
+        x:(a.x+b.x)/2+(Math.random()-.5)*18,
+        y:(a.y+b.y)/2+(Math.random()-.5)*18,
+        gen:ng, hyb:true,
+        c1:[a.r,a.g2,a.b], c2:[b.r,b.g2,b.b],
+        sz:28+Math.random()*16,
+      });
+      creatures.push(c);
+      births++;
+      logEv(`${a.ch} × ${b.ch} → ${nc}　G${ng}`, '#e8507a');
+      birthPop(c.x, c.y, nc, rr(c));
+    }
+    a.max = a.age + 100; b.max = b.age + 100;
+  }, 1000);
+}
+
+function rr(c) {
+  const glow = .7;
+  return [
+    Math.min(255,c.r+(c.g.gr-c.r)*.5*glow)|0,
+    Math.min(255,c.g2+(c.g.gg-c.g2)*.5*glow)|0,
+    Math.min(255,c.b+(c.g.gb-c.g.b)*.5*glow)|0,
+  ];
+}
+
+function mergeChar(a, b) {
+  if (MERGE[a+b]) return MERGE[a+b];
+  if (MERGE[b+a]) return MERGE[b+a];
+  const all = GRP.flatMap(g=>g.chars);
+  const unused = all.filter(c => !creatures.find(cr=>cr.ch===c));
+  return unused.length ? unused[Math.floor(Math.random()*Math.min(6,unused.length))]
+                       : all[Math.floor(Math.random()*all.length)];
+}
+
+// ---- ドラマ ----
+let dtimer = null;
+function showDrama(text, delay, next) {
+  const el=document.getElementById('drama');
+  const tx=document.getElementById('dtext');
+  tx.textContent = text; el.classList.add('on');
+  clearTimeout(dtimer);
+  dtimer = setTimeout(() => {
+    if (next) { tx.textContent=next; setTimeout(()=>el.classList.remove('on'),600); }
+    else el.classList.remove('on');
+  }, delay);
+}
+
+// ---- 誕生ポップ ----
+function birthPop(x, y, ch, col) {
+  const d = document.createElement('div');
+  d.style.cssText = `position:fixed;left:${x-14}px;top:${y-30}px;
+    font-size:18px;font-family:sans-serif;pointer-events:none;z-index:25;
+    color:rgb(${col.join(',')});animation:ein .3s ease forwards;
+    font-weight:900;`;
+  d.textContent = '✨'+ch;
+  document.body.appendChild(d);
+  let t=0, oy=0;
+  const id=setInterval(()=>{
+    t+=16; oy-=1.5;
+    d.style.top = (y-30+oy)+'px';
+    d.style.opacity = Math.max(0,1-t/1600);
+    if(t>1600){clearInterval(id);d.remove();}
+  },16);
+}
+
+// ---- イベントログ ----
+const evs = [];
+function logEv(msg, col='rgba(0,0,0,.55)') {
+  evs.unshift({msg,col}); if(evs.length>7) evs.pop();
+  const el=document.getElementById('elog'); el.innerHTML='';
+  evs.slice(0,5).forEach((e,i)=>{
+    const d=document.createElement('div'); d.className='eitem';
+    d.style.borderColor=e.col;
+    d.style.opacity=(1-i*.16)+'';
+    d.style.animationDelay='0s';
+    d.textContent=e.msg;
+    el.appendChild(d);
+  });
+}
+
+// ---- モード切替 ----
+function setMode(m) {
+  godMode=m;
+  ['en','ze','wa'].forEach(id=>document.getElementById('m'+id).classList.remove('on'));
+  document.getElementById('m'+m).classList.add('on');
+}
+
+// ---- さざ波 ----
+const rips=[];
+function drawRips() {
+  for(let i=rips.length-1;i>=0;i--){
+    const r=rips[i];
+    ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(${r.c},${r.a})`;
+    ctx.lineWidth=1.3; ctx.stroke();
+    r.r+=3; r.a*=.966;
+    if(r.a<.02) rips.splice(i,1);
+  }
+}
+function ripple(x,y,c){rips.push({x,y,r:0,a:.65,c});}
+
+// ---- クリック ----
+cv.addEventListener('click', e => {
+  const cx=e.clientX, cy=e.clientY, R=130;
+  const near=creatures.filter(c=>Math.hypot(c.x-cx,c.y-cy)<R&&!c.married);
+
+  if (godMode==='en') {
+    if (near.length>=2) {
+      const [a,b]=[near[0],near[1]];
+      a.pull={x:b.x,y:b.y,s:.22}; b.pull={x:a.x,y:a.y,s:.22};
+      if(!a.partner&&!b.partner){a.partner=b;b.partner=a;}
+      logEv(`神が ${a.ch} と ${b.ch} の縁を結んだ`,'#e8507a');
+    } else if (near.length===1) {
+      near[0].pull={x:cx,y:cy,s:.15};
+    } else if (creatures.length<MAX) {
+      const c=new K({x:cx+(Math.random()-.5)*20,y:cy+(Math.random()-.5)*20});
+      creatures.push(c);
+      logEv(`「${c.ch}」を召喚した`,'#22c55e');
+    }
+    ripple(cx,cy,'255,175,50');
+  } else if (godMode==='ze') {
+    separations++;
+    if (near.length>0) {
+      for(const c of near){
+        if(c.partner){c.partner.partner=null;c.partner.mcool=300;}
+        c.partner=null; c.mcool=300;
+        const dx=c.x-cx,dy=c.y-cy,d=Math.hypot(dx,dy)||1;
+        c.vx+=dx/d*2.2+(Math.random()-.5)*.5;
+        c.vy+=dy/d*2.2+(Math.random()-.5)*.5;
+      }
+      logEv(`縁を断ち切った（${near.map(c=>c.ch).slice(0,3).join('・')}）`,'#5040e8');
+      showDrama('縁切', 500);
+    }
+    ripple(cx,cy,'100,70,255');
+  }
+});
+
+// ---- キーボード ----
+document.addEventListener('keydown', e=>{
+  if(e.code==='Space'&&!e.repeat){
+    e.preventDefault();
+    if(creatures.length<MAX){
+      const c=new K();
+      creatures.push(c);
+      logEv(`「${c.ch}」が現れた`,'#22c55e');
+    }
+  }
+});
+
+// ---- HUD ----
+function updateHUD(){
+  const alive=creatures.filter(c=>!c.married);
+  const loving=alive.filter(c=>c.partner).length;
+  const uniq=new Set(alive.map(c=>c.ch)).size;
+  const pop=alive.length;
+  const set=(id,pct,val)=>{
+    document.getElementById('f-'+id).style.width=Math.min(100,pct)+'%';
+    document.getElementById('v-'+id).textContent=val;
+  };
+  set('en',marriages/30*100,marriages);
+  set('ze',separations/20*100,separations);
+  set('po',pop/MAX*100,pop);
+  set('lo',loving/(pop||1)*100,loving);
+  set('di',uniq/36*100,uniq);
+  document.getElementById('n-ma').textContent=marriages;
+  document.getElementById('n-ge').textContent=maxGen;
+  document.getElementById('n-bi').textContent=births;
+}
+
+// ---- 背景 ----
+function drawBG(){
+  ctx.fillStyle='#efefec';
+  ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='rgba(0,0,0,0.028)';
+  const s=44;
+  for(let x=0;x<cv.width;x+=s)
+    for(let y=0;y<cv.height;y+=s)
+      ctx.fillRect(x,y,1,1);
+}
+
+// ---- 補充 ----
+function maintain(){
+  const alive=creatures.filter(c=>!c.married);
+  if(alive.length<18&&creatures.length<MAX){
+    const n=Math.min(4,MAX-creatures.length);
+    for(let i=0;i<n;i++) setTimeout(()=>creatures.push(new K()),i*220);
+  }
+}
+
+// ---- 初期スポーン ----
+for(let i=0;i<42;i++) setTimeout(()=>creatures.push(new K()),i*80);
+
+// ---- ループ ----
+let fr=0;
+function loop(){
+  fr++;
+  drawBG();
+  drawRips();
+
+  // パートナー解除
+  for(const c of creatures){
+    if(c.partner&&!c.partner.married&&Math.hypot(c.x-c.partner.x,c.y-c.partner.y)>330){
+      c.partner.partner=null; c.partner=null; c.mcool=120;
+    }
+  }
+
+  // 自動パートナー形成
+  if(fr%12===0){
+    for(const a of creatures){
+      if(a.partner||a.married||a.mcool>0) continue;
+      for(const b of creatures){
+        if(b===a||b.partner||b.married||b.mcool>0) continue;
+        if(!(ATT[a.gi]||[]).includes(b.gi)) continue;
+        if(Math.hypot(a.x-b.x,a.y-b.y)<95){a.partner=b;b.partner=a;break;}
+      }
+    }
+  }
+
+  for(const c of creatures) c.update(fr);
+  creatures.sort((a,b)=>a.gen-b.gen);
+  for(const c of creatures) c.draw();
+
+  if(fr%10===0){
+    for(const a of creatures){
+      if(a.partner&&!a.married) tryMarry(a,a.partner,fr);
+    }
+  }
+
+  creatures=creatures.filter(c=>!c.dead());
+  if(fr%22===0){updateHUD();maintain();}
+  requestAnimationFrame(loop);
+}
+
+loop();
+
+// ---- 初期ログ ----
+setTimeout(()=>logEv('神よ、文字の運命を操れ'),500);
+setTimeout(()=>logEv('💛 縁結びモードでクリックしてみよ','#e8507a'),1400);
+</script>
+</body>
+</html>
